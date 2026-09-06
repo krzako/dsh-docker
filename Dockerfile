@@ -316,6 +316,20 @@ ENV AGENT_ENVIRONMENT_FILE=/home/node/environment.md
 COPY --chown=node:node entrypoint.sh /usr/local/bin/dsh-entrypoint
 RUN chmod 0555 /usr/local/bin/dsh-entrypoint
 
+# Settings seed: merged into $DSH_HOME/settings.yaml at every container start.
+COPY --chown=node:node settings.seed.yaml /opt/dsh-seed/settings.seed.yaml
+COPY --chown=node:node addons/seed-settings/seed-settings.mjs /opt/dsh-seed/seed-settings.mjs
+
+# Build-time self-test of the settings seed merge logic. The test resolves its
+# seed document at ../../settings.seed.yaml, so mirror that layout in a
+# temporary directory and drop it after the run. The harness checkout copied
+# above provides the yaml package the merge script loads.
+COPY --chown=node:node addons/seed-settings /opt/dsh-seed-selftest/addons/seed-settings
+COPY --chown=node:node settings.seed.yaml /opt/dsh-seed-selftest/settings.seed.yaml
+RUN cd /opt/dsh-seed-selftest/addons/seed-settings \
+    && node --test seed-settings.test.mjs \
+    && rm -rf /opt/dsh-seed-selftest
+
 # Start llama-proxy in the background before handing control to the original
 # DSH entrypoint. Logs and the background PID are kept in the DSH home.
 RUN cat > /usr/local/bin/dsh-entrypoint-with-proxy <<'EOF'
@@ -349,7 +363,10 @@ RUN node --version \
     && traefik version \
     && minio --version \
     && mc --version \
-    && test -f /llama-proxy/server.js
+    && test -f /llama-proxy/server.js \
+    && node --check /opt/dsh-seed/seed-settings.mjs \
+    && test -f /opt/dsh-seed/settings.seed.yaml \
+    && test -x /usr/local/bin/dsh-entrypoint-with-proxy
 
 USER node
 WORKDIR /home/node
