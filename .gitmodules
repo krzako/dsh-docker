@@ -1,3 +1,6 @@
 [submodule "deepseek-harness"]
 	path = deepseek-harness
 	url = https://github.com/krzako/deepseek-harness-no-telemetry
+[submodule "dsh-git"]
+	path = dsh-git
+	url = https://github.com/krzako/dsh-git
