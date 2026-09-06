@@ -1,0 +1,3 @@
+# Keep shell scripts executable-safe on Windows checkouts: CRLF breaks
+# shebangs and bash parsing (dsh-git-helper.sh, reset_api_key.sh, entrypoints).
+*.sh text eol=lf
