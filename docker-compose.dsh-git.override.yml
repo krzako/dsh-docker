@@ -1,0 +1,6 @@
+services:
+  dsh-git:
+    volumes:
+      - type: bind
+        source: ../volumes/dsh-git-repos
+        target: /repos
