@@ -16,6 +16,11 @@ services:
     
     environment:
       DSH_PUBLIC_WEB_URL: "http://localhost:3080"
+      # Provider API keys, sourced from the host .env file. Each name matches
+      # the provider's apiKeyEnv entry in settings.seed.yaml (provider name in
+      # upper case + _API_KEY). An empty value means the key is not provided.
+      LLAMA_API_KEY: "${LLAMA_API_KEY:-}"
+      GHE_API_KEY: "${GHE_API_KEY:-}"
 
     ports:
       # deepseek-harness port
@@ -26,6 +31,9 @@ services:
     volumes:
       - "./volumes/workspaces:/home/node"
       - "dsh-home:/home/node/.dsh"
+      # Settings seed for the startup merge; mounted read-only so host edits
+      # apply without rebuilding the image.
+      - "./settings.seed.yaml:/opt/dsh-seed/settings.seed.yaml:ro"
 
     networks:
       - default

@@ -13,17 +13,24 @@ printf 'DSH_TELEMETRY_DISABLED=%s\n' "$DSH_TELEMETRY_DISABLED"
 printf 'DSH_TELEMETRY_MODE=%s\n' "$DSH_TELEMETRY_MODE"
 echo "========================================"
 
-CREDENTIALS_FILE="/home/node/.dsh/.credentials.yaml"
+echo ""
 
-if [ -f "$CREDENTIALS_FILE" ]; then
-    echo "Credentials file before chmod:"
-    stat -c '%a %U:%G %n' "$CREDENTIALS_FILE"
+echo "========================================"
+echo " Settings seed"
+echo "========================================"
 
-    chmod 600 "$CREDENTIALS_FILE"
-
-    echo "Credentials file after chmod:"
-    stat -c '%a %U:%G %n' "$CREDENTIALS_FILE"
+# Merge settings.seed.yaml into the user's settings document before DSH reads
+# it. Provider presence, defaultInput, missing models, and compat are enforced
+# on every start; the remaining seed sections apply only while the
+# .settings-seed-complete flag is absent (first seed).
+SETTINGS_SEED_SCRIPT="${SETTINGS_SEED_SCRIPT:-/opt/dsh-seed/seed-settings.mjs}"
+if [ -f "$SETTINGS_SEED_SCRIPT" ]; then
+    node "$SETTINGS_SEED_SCRIPT" || exit 1
+else
+    echo "No settings seed script at $SETTINGS_SEED_SCRIPT; skipping"
 fi
+
+echo "========================================"
 
 # dsh currently binds Web UI to loopback and rejects --host 0.0.0.0.
 # Keep dsh itself on 127.0.0.1:3081 and expose 0.0.0.0:3080 only

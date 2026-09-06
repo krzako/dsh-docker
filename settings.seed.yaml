@@ -1,0 +1,73 @@
+ui-theme:
+  preference: dark
+
+permission:
+  defaultPreset: danger-full-access
+
+llm-pi-ai:
+  providers:
+    llama:
+      displayName: llama
+      apiKeyEnv: LLAMA_API_KEY
+      api: openai-completions
+      baseURL: http://localhost:3099
+      defaultInput: [text, image]
+      defaultContextWindow: 131072
+      streamIdleTimeoutMs: 600000
+
+#      retryPolicy:
+#        mode: always
+#        backoff:
+#          initialDelayMs: 5000
+#          maxDelayMs: 120000
+#          jitterRatio: 0.2
+
+      compat:
+        thinkingFormat: chat-template
+        chatTemplateKwargs:
+          enable_thinking:
+            $var: thinking.enabled
+          preserve_thinking: true
+          reasoning_effort:
+            $var: thinking.effort
+            omitWhenOff: true
+
+      models:
+        - id: qwen3.8-27b
+          name: qwen3.8-27b
+          reasoningEfforts:
+            off: "none"
+            low: "low"
+            medium: "medium"
+            xhigh: "xhigh"
+
+    ghe:
+      defaultInput: [text, image]
+      apiKeyEnv: GHE_API_KEY
+      api: openai-completions
+      baseURL: http://host.docker.internal:3098/v1
+      models:
+        - id: auto
+        - id: claude-opus-4.7
+        - id: claude-sonnet-4.6
+        - id: claude-opus-4.6
+        - id: claude-sonnet-4.5
+        - id: claude-opus-4.5
+        - id: claude-haiku-4.5
+        - id: gpt-5.6-sol
+        - id: gpt-5.6-terra
+        - id: gpt-5.6-luna
+        - id: gpt-5.5
+        - id: gpt-5.4
+        - id: gpt-5.4-mini
+        - id: gpt-5.3-codex
+        - id: gpt-5-mini
+        - id: gemini-3.5-flash
+        - id: gemini-3.1-pro-preview
+
+agent-default-model:
+  provider: llama
+  model: qwen3.8-27b
+
+agent-presets:
+  default: ptc
