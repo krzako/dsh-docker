@@ -11,7 +11,7 @@ services:
         dsh_source: "${DSH_SOURCE:-./deepseek-harness}"
         dsh_docker_git_source: "${DSH_DOCKER_GIT_SOURCE:-./.git/modules/deepseek-harness}"
 
-    image: deepseek-harness:latest
+    image: ${DSH_IMAGE:-deepseek-harness:latest}
     container_name: dsh
     
     environment:
