@@ -1,0 +1,96 @@
+# Test instance of the full DSH deployment (DeepSeek Harness + dsh-git
+# bridge), fully isolated from the production stack:
+#
+#   name: dsh-test                 separate compose project, so a
+#                                  `docker compose down -v` here can never
+#                                  touch the production volumes
+#   container names                dsh-test / dsh-git-test
+#   host ports                     4080 (web), 4310-4330 (agents),
+#                                  10418 (git daemon) -- production ports
+#                                  plus 1000, so both instances can run at
+#                                  the same time
+#   data volumes (all -test)       ./volumes/workspaces-test      (bind)
+#                                  ./volumes/dsh-git-repos-test   (bind)
+#                                  dsh-home-test                  (named)
+#
+# The settings seed file is shared with the production instance (read-only).
+# Provider API keys come from the same .env file.
+#
+# Start it with tools/run_test_instance.sh or:
+#   docker compose -f docker-compose.test.yml up
+
+name: dsh-test
+
+services:
+  deepseek-harness:
+    build:
+      context: .
+      additional_contexts:
+        dsh_source: "${DSH_SOURCE:-./deepseek-harness}"
+        dsh_docker_git_source: "${DSH_DOCKER_GIT_SOURCE:-./.git/modules/deepseek-harness}"
+
+    image: ${DSH_TEST_IMAGE:-deepseek-harness:test}
+    container_name: dsh-test
+
+    environment:
+      DSH_PUBLIC_WEB_URL: "http://localhost:4080"
+      # Provider API keys, sourced from the host .env file (same names as
+      # the production instance).
+      LLAMA_API_KEY: "${LLAMA_API_KEY:-}"
+      GHE_API_KEY: "${GHE_API_KEY:-}"
+
+    ports:
+      # deepseek-harness web port (production 3080 + 1000)
+      - "127.0.0.1:4080:3080"
+      # Ports for agents applications (production 3310-3330 + 1000)
+      - "127.0.0.1:4310-4330:3310-3330"
+
+    volumes:
+      - "./volumes/workspaces-test:/home/node"
+      - "dsh-home-test:/home/node/.dsh"
+      # Settings seed for the startup merge; mounted read-only so host edits
+      # apply without rebuilding the image.
+      - "./settings.seed.yaml:/opt/dsh-seed/settings.seed.yaml:ro"
+
+    networks:
+      - default
+      - dsh_git_test
+
+    stdin_open: true
+    tty: true
+
+  dsh-git:
+    # Same service name as in production so the host name `dsh-git` resolves
+    # inside the isolated network (agents push to git://dsh-git/...).
+    build:
+      context: ./dsh-git/server
+    image: ${BRIDGE_TEST_IMAGE:-dsh-git:test}
+    container_name: dsh-git-test
+    user: "${BRIDGE_UID:-1000}:${BRIDGE_GID:-1000}"
+    environment:
+      HOME: /tmp
+    volumes:
+      - type: bind
+        source: ./volumes/dsh-git-repos-test
+        target: /repos
+    ports:
+      # git daemon (production 9418 + 1000)
+      - "127.0.0.1:10418:9418"
+    networks:
+      - dsh_git_test
+    read_only: true
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,noexec,size=16m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    init: true
+    restart: unless-stopped
+
+networks:
+  dsh_git_test:
+    name: dsh_git_test
+
+volumes:
+  dsh-home-test:
