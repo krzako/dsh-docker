@@ -75,6 +75,8 @@ server.listen(PUBLIC_PORT, PUBLIC_HOST, () => {
 });
 NODE
 
+/usr/local/bin/install-dsh-addons
+
 exec node "$DSH_SOURCE_DIR/apps/cli/lib/bin.js" web \
   --port 3081 \
   --trusted-host localhost:3080 \
