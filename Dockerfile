@@ -368,6 +368,55 @@ RUN node --version \
     && test -f /opt/dsh-seed/settings.seed.yaml \
     && test -x /usr/local/bin/dsh-entrypoint-with-proxy
 
+USER root
+
+# Chromium + wszystkie jego zależności systemowe.
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        chromium \
+        chromium-sandbox \
+        ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+
+# Plugin DSH.
+RUN mkdir -p /opt/dsh-addons
+
+COPY --chown=node:node \
+    addons/dsh-export-conversation-pdf-1.1.0.tar.gz \
+    /opt/dsh-addons/dsh-export-conversation-pdf-1.1.0.tar.gz
+
+
+# Installer addonów uruchamiany przy starcie kontenera,
+# już po podmontowaniu /home/node/.dsh.
+RUN cat > /usr/local/bin/install-dsh-addons <<'EOF'
+#!/bin/sh
+set -eu
+
+PLUGIN="/opt/dsh-addons/dsh-export-conversation-pdf-1.1.0.tar.gz"
+
+echo "[dsh-addons] Installing dsh-export-conversation-pdf..."
+
+npx --yes @deepseek-ai/dsh \
+    plugin \
+    --profile web \
+    add \
+    -w \
+    "$PLUGIN"
+
+echo "[dsh-addons] dsh-export-conversation-pdf ready."
+EOF
+
+RUN chmod 755 /usr/local/bin/install-dsh-addons
+
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+
+RUN corepack enable \
+    && corepack install --global pnpm@12.3.4
+
+ENV DSH_PDF_CHROME_NO_SANDBOX=1
+
 USER node
 WORKDIR /home/node
 
