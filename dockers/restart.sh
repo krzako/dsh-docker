@@ -1,3 +1,4 @@
-docker compose down
-docker compose up -d --build
-docker compose logs -f
+#!/usr/bin/env sh
+
+./stop.sh
+./start.sh
