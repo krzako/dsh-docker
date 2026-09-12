@@ -41,7 +41,7 @@ services:
     container_name: copilot-proxy
     restart: unless-stopped
     ports:
-      - "127.0.0.1:${COPILOT_PROXY_PORT:-9091}:9091"
+      - "127.0.0.1:${COPILOT_PROXY_PORT:-9091}:${COPILOT_PROXY_PORT:-9091}"
     environment:
       COPILOT_PROXY_HOST: "0.0.0.0"
       COPILOT_PROXY_PORT: "${COPILOT_PROXY_API_KEY:-9091}"

@@ -10,7 +10,7 @@ llm-pi-ai:
       displayName: llm_proxy
       apiKeyEnv: LLM_PROXY_API_KEY
       api: openai-completions
-      baseURL: http://llm_proxy:10090
+      baseURL: http://llm-proxy:9090
       defaultInput: [text, image]
       defaultContextWindow: 131072
       streamIdleTimeoutMs: 600000
@@ -41,7 +41,7 @@ llm-pi-ai:
             medium: "medium"
             xhigh: "xhigh"
 
-    copilot_proxy:
+    copilot-proxy:
       defaultInput: [text, image]
       apiKeyEnv: COPILOT_PROXY_API_KEY
       api: openai-completions
