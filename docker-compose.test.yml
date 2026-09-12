@@ -36,8 +36,8 @@ services:
       DSH_PUBLIC_WEB_URL: "http://localhost:4080"
       # Provider API keys, sourced from the host .env file (same names as
       # the production instance).
-      LLAMA_API_KEY: "${LLAMA_API_KEY:-}"
-      GHE_API_KEY: "${GHE_API_KEY:-}"
+      LLM_PROXY_API_KEY: "${LLM_PROXY_API_KEY:-}"
+      COPILOT_PROXY_API_KEY: "${COPILOT_PROXY_API_KEY:-}"
 
     ports:
       # deepseek-harness web port (production 3080 + 1000)
@@ -50,7 +50,7 @@ services:
       - "dsh-home-test:/home/node/.dsh"
       # Settings seed for the startup merge; mounted read-only so host edits
       # apply without rebuilding the image.
-      - "./settings.seed.yaml:/opt/dsh-seed/settings.seed.yaml:ro"
+      - "./settings.seed.test.yaml:/opt/dsh-seed/settings.seed.yaml:ro"
 
     networks:
       - default
@@ -87,6 +87,78 @@ services:
       - no-new-privileges:true
     init: true
     restart: unless-stopped
+    
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui-test
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${OPEN_WEBUI_PORT:-10999}:8080"
+    environment:
+      WEBUI_URL: "http://localhost:10999"
+      WEBUI_AUTH: "true"
+      HF_HUB_OFFLINE: "1"
+
+      OPENAI_API_BASE_URL: "http://llm-proxy:9090/v1"
+      OPENAI_API_KEY: "${LLM_PROXY_API_KEY}"
+
+      ENABLE_WEB_SEARCH: "true"
+      WEB_SEARCH_ENGINE: "searxng"
+      WEB_SEARCH_RESULT_COUNT: "5"
+      WEB_SEARCH_CONCURRENT_REQUESTS: "10"
+      SEARXNG_QUERY_URL: "http://searxng:8080/search?q=<query>"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./volumes/open-webui-test:/app/backend/data
+
+  llm-proxy:
+    build: ./llm-proxy
+    image: llm-proxy:test
+    container_name: llm-proxy-test
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:10090:9090"
+    environment:
+      LLM_PROXY_HOST: "0.0.0.0"
+    volumes:
+      - ./volumes/llm-proxy-test:/app/requests
+
+  copilot-proxy:
+    build: ./copilot-proxy
+    image: copilot-proxy:test
+    container_name: copilot-proxy-test
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:10091:10091"
+    environment:
+      COPILOT_PROXY_HOST: "0.0.0.0"
+      COPILOT_PROXY_PORT: "10091"
+      COPILOT_PROXY_API_KEY: "${COPILOT_PROXY_API_KEY:-}"
+      COPILOT_PROXY_GHE_HOST: "${COPILOT_PROXY_GHE_HOST:-}"
+      COPILOT_PROXY_COPILOT_SDK_LOG_LEVEL: "${COPILOT_PROXY_COPILOT_SDK_LOG_LEVEL:-warning}"
+      COPILOT_PROXY_LOG_LEVEL: "${COPILOT_PROXY_LOG_LEVEL:-debug}"
+      COPILOT_PROXY_LOG_REQUESTS: "${COPILOT_PROXY_LOG_REQUESTS:-true}"
+    volumes:
+      - copilot-proxy-data-test:/home/node/.copilot
+      - ./volumes/copilot-proxy-logs-test:/app/logs/copilot-proxy
+
+  searxng:
+    image: searxng/searxng:latest
+    container_name: searxng
+    restart: unless-stopped
+    volumes:
+      - ./volumes/searxng-test:/etc/searxng:rw
+
+  open-terminal:
+    image: ghcr.io/open-webui/open-terminal:latest
+    container_name: open-terminal-test
+    restart: unless-stopped
+    environment:
+      OPEN_TERMINAL_API_KEY: "${OPEN_TERMINAL_API_KEY}"
+    volumes:
+      - ./volumes/open-terminal-test:/home/user
+    
 
 networks:
   dsh_git_test:
@@ -94,3 +166,4 @@ networks:
 
 volumes:
   dsh-home-test:
+  copilot-proxy-data-test:

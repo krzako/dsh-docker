@@ -18,12 +18,58 @@ It is intended for clients that can speak the OpenAI Chat Completions protocol (
 - `reasoning_effort`: `low`, `medium`, `high`, `xhigh`
 - `response_format` as prompt-level guidance
 - usage extensions for cache reads/writes and Copilot AI credits
+- canonical conversation mapping for OpenCode, DeepSeek Harness and Open WebUI
+- durable request/conversation state in `COPILOT_PROXY_CONVERSATION_STORE`
 
 The proxy deliberately runs the SDK in `mode: "empty"` and exposes only tools declared by the API caller. It does not give the model Copilot CLI filesystem/shell tools, MCP servers, skills, memory or repository access.
 
 ## Important compatibility note
 
 Copilot SDK is an agent/session API rather than a raw OpenAI Chat Completions endpoint. The proxy therefore serializes the supplied OpenAI conversation history into a stable transcript for each request. This keeps the HTTP interface OpenAI-compatible and lets ordinary OpenAI clients work, but it is not byte-for-byte equivalent to calling OpenAI's API directly.
+
+## Client identity and conversation history
+
+The proxy currently exposes one normalized input endpoint, `POST /v1/chat/completions`.
+The source adapter selects the client from `x-proxy-source` or the identifiers below.
+OpenCode native URL routing is not implemented; use `x-proxy-source: opencode` when
+the URL does not carry a session identifier.
+
+| Source | Main conversation ID | Auxiliary IDs | Message ID |
+|---|---|---|---|
+| OpenCode | `session_id` / `x-session-id` | `x-session-affinity` | `message_id` |
+| DeepSeek Harness | `conversation_id`, `session_id`, `thread_id` | `run_id`, `request_id` | `message_id` |
+| Open WebUI | `chat_id` | `session_id` | `message_id` |
+| Proxy | `conversation_id` | external IDs | generated request/message records |
+
+Identifiers can be supplied as top-level fields or inside `metadata`. The proxy keeps
+`request_id`, `run_id`, `message_id`, `chat_id` and `session_id` distinct. An OpenCode
+session/header mismatch returns HTTP 409. Without a stable external ID, a new proxy
+conversation is intentionally created; callers should send `x-request-id` to make
+retries idempotent. The optional `x-user-id` or `user` value isolates mappings.
+If no source can be identified, the proxy does not call Copilot and returns an
+OpenAI-compatible assistant response containing `Copilot Proxy: Unable to recognize source`.
+Open WebUI requests without an explicit chat/session identifier are recognized by
+the observed backend marker `Python/... aiohttp/...`; explicit source and ID fields
+always take precedence.
+
+The durable JSON store defaults to `/home/node/.copilot/proxy-conversations.json` and
+can be changed with `COPILOT_PROXY_CONVERSATION_STORE`. Incoming ordered `messages` are the
+request context and are recorded once per request. The assistant message is appended
+only after Copilot completes successfully. Tool calls and tool results remain
+structured OpenAI messages; they are not converted to ordinary text.
+`COPILOT_PROXY_MAX_CONTEXT_MESSAGES` (default `2000`) rejects oversized contexts rather than
+silently dropping messages. Retries with the same `x-request-id` or `message_id` are
+deduplicated.
+
+## Streaming and Copilot boundary
+
+The Copilot-specific adapter is `src/copilot/CopilotGateway.ts`. It uses the installed
+`@github/copilot-sdk` runtime (`CopilotClient`, `createSession`, `session.send`, and
+session events); no undocumented Copilot HTTP protocol or client conversation IDs are
+sent upstream. The proxy emits OpenAI-compatible SSE chunks because the SDK event
+stream is not OpenAI SSE. It preserves delta order, sends a final `finish_reason`,
+optionally sends usage, then `[DONE]`. Client disconnects abort the Copilot session
+and mark the request `interrupted`.
 
 Tool calls are intentionally *delegated* to the OpenAI client: a Copilot custom tool handler records the requested function call and immediately aborts that Copilot turn without executing the real tool. The caller (DSH, another agent harness, etc.) executes it and sends the tool result in the next Chat Completions request. This avoids giving Copilot access to the harness's actual tools.
 
@@ -37,7 +83,7 @@ Pinned at creation time:
 - `@github/copilot-sdk` 1.0.8
 - `@github/copilot` 1.0.80
 
-The SDK currently bundles the Copilot runtime, so the CLI package is not required for inference itself. It is included as a development dependency only for a convenient local interactive login path and is pruned from the production Docker image.
+The proxy connects to a `copilot --headless` runtime over TCP on `127.0.0.1:4321` (hardcoded). In Docker that runtime runs in the same container, so the CLI package ships in the image.
 
 ## Install
 
@@ -45,92 +91,34 @@ The SDK currently bundles the Copilot runtime, so the CLI package is not require
 npm install
 ```
 
-### Authentication option A: existing Copilot login via headless runtime (recommended locally)
+### Authentication
 
-If `copilot -p "test"` already works under your Windows user, start that authenticated CLI as a headless runtime in a separate terminal:
+The proxy does not read or copy OAuth credentials itself. It only talks to the headless runtime, which owns the login.
 
-```powershell
-copilot --headless --port 4321
-```
-
-Then set:
-
-```env
-COPILOT_RUNTIME_URL=localhost:4321
-```
-
-The proxy connects with `RuntimeConnection.forUri(...)`. The external Copilot CLI owns authentication; the proxy does not try to read or copy OAuth credentials itself.
-
-The included `.env.example` enables this local flow by default.
-
-### Authentication option B: token / SDK-managed runtime
-
-Clear `COPILOT_RUNTIME_URL`, then set a fine-grained GitHub PAT with the **Copilot Requests** permission. GitHub recommends `COPILOT_GITHUB_TOKEN` for explicit Copilot usage:
-
-```bash
-export COPILOT_GITHUB_TOKEN=github_pat_...
-```
-
-On PowerShell:
-
-```powershell
-$env:COPILOT_GITHUB_TOKEN = "github_pat_..."
-```
-
-`GITHUB_TOKEN` is also accepted as a fallback.
-
-For a server/container this is usually easier than interactive login.
-
-## Run
-
-For the already-authenticated local CLI flow, use two terminals.
-
-Terminal 1:
+Local development: run the already-authenticated CLI in a separate terminal, then start the proxy:
 
 ```powershell
 copilot --headless --port 4321
 ```
 
-Terminal 2:
-
 ```powershell
-npm install
 npm run dev
 ```
 
-A local `.env` is already included with `PORT=9999`, no proxy API key, and `COPILOT_RUNTIME_URL=localhost:4321`.
+First-time CLI login is done once with `copilot login --host company.ghe.com --web-flow`. In Docker see [Docker Compose](#docker-compose).
 
-Then test:
-
-```powershell
-curl.exe http://127.0.0.1:9999/v1/models
-```
-
-Or simply run:
-
-```bash
-npm run dev
-```
-
-or:
-
-```bash
-npm run build
-npm start
-```
+A local `.env` is already included with `COPILOT_PROXY_PORT=9091` and an example proxy API key. The project automatically loads `.env` via `dotenv/config` for both `npm run dev` and `npm start`.
 
 Default endpoint:
 
 ```text
-http://127.0.0.1:9999/v1
+http://127.0.0.1:9090/v1
 ```
-
-The project automatically loads `.env` via `dotenv/config` for both `npm run dev` and `npm start`.
 
 ## Check models
 
 ```bash
-curl http://127.0.0.1:9999/v1/models
+curl http://127.0.0.1:9090/v1/models
 ```
 
 The response uses normal OpenAI model objects and adds a `copilot` field containing the model capabilities, policy and live billing data returned by GitHub.
@@ -138,13 +126,13 @@ The response uses normal OpenAI model objects and adds a `copilot` field contain
 ## Check quota
 
 ```bash
-curl http://127.0.0.1:9999/v1/copilot/quota
+curl http://127.0.0.1:9090/v1/copilot/quota
 ```
 
 ## Chat example
 
 ```bash
-curl http://127.0.0.1:9999/v1/chat/completions \
+curl http://127.0.0.1:9090/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
     "model": "gpt-5.6-sol",
@@ -157,7 +145,7 @@ curl http://127.0.0.1:9999/v1/chat/completions \
 ## Streaming
 
 ```bash
-curl -N http://127.0.0.1:9999/v1/chat/completions \
+curl -N http://127.0.0.1:9090/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
     "model": "gpt-5.6-sol",
@@ -196,7 +184,7 @@ llm-pi-ai:
     github-copilot-proxy:
       displayName: GitHub Copilot Proxy
       api: openai-completions
-      baseURL: http://host.docker.internal:9999/v1
+      baseURL: http://host.docker.internal:9090/v1
       apiKeyEnv: COPILOT_PROXY_API_KEY
       models:
         - id: gpt-5.6-sol
@@ -206,34 +194,53 @@ llm-pi-ai:
 If DSH and this proxy are in the same Compose network, use the service name instead:
 
 ```yaml
-baseURL: http://copilot-openai-proxy:9999/v1
+baseURL: http://copilot-proxy:9090/v1
 ```
 
-If you leave `PROXY_API_KEY` empty, the proxy does not require an Authorization header. If your client insists on an API key, give it any value only when the proxy itself has no key configured.
+If you leave `COPILOT_PROXY_API_KEY` empty, the proxy does not require an Authorization header. If your client insists on an API key, give it any value only when the proxy itself has no key configured.
 
 ## Docker Compose
-
-Create `.env` from `.env.example`. The supplied compose file binds the proxy only to `127.0.0.1:9999` on the host.
-
-If the proxy itself runs in Docker but the authenticated Copilot CLI runs on the Windows host, the CLI must listen beyond loopback:
-
-```powershell
-copilot --headless --host 0.0.0.0 --port 4321
-```
-
-and set in `.env`:
-
-```env
-COPILOT_RUNTIME_URL=host.docker.internal:4321
-```
-
-Then:
 
 ```bash
 docker compose up -d --build
 ```
 
-Alternatively, omit `COPILOT_RUNTIME_URL` and provide `COPILOT_GITHUB_TOKEN` to let the SDK spawn its own runtime inside the container.
+The container first runs `copilot login --host <COPILOT_PROXY_GHE_HOST> --device-code`, then starts the proxy in the background (`nohup`, log at `/app/logs/copilot-proxy/proxy.log`, port `9090`) and `copilot --headless --host 127.0.0.1 --port 4321` as its main process. Runtime logs are written to `/app/logs/copilot-proxy/headless.log`.
+
+### Authentication (device code)
+
+The login prints the device code and URL to the container logs:
+
+```bash
+docker logs -f copilot-proxy
+```
+
+```text
+To authenticate, visit https://company.ghe.com/login/device and enter code XXXX-XXXX
+Waiting for authorization...
+```
+
+Open the URL in a browser (any machine) and enter the code — there is no local OAuth callback, so it works from the Docker host. The CLI polls for the result; once authorized, the proxy and headless runtime come up.
+
+The device code flow is used on purpose: the web flow (`--web-flow`) redirects the browser to `http://127.0.0.1:<port>/callback` inside the container, which a host browser cannot reach.
+
+### Where the token is stored
+
+The token is stored in `/home/node/.copilot/config.json` (key `copilotTokens`, file mode `600`) inside the **named volume** `copilot-proxy-data` (created as `openwebui_copilot-proxy-data` by this compose project), so it survives container restarts and recreation. A named volume is used instead of a Windows bind mount for speed and reliability.
+
+Two things make this work:
+
+- `COPILOT_HOME=/home/node/.copilot` (and `HOME=/home/node`) is pinned in the image `ENV`. Docker Desktop can forward host environment variables (e.g. a Windows `HOME`) into containers; without the pin the CLI would use a non-persistent `~/.copilot` and the token would be lost on every restart.
+- The entrypoint keeps `"storeTokenPlaintext": true` set (the CLI's built-in switch for non-interactive plaintext token storage; the interactive alternative asks "Store token in plaintext config file?" and requires a TTY). The runtime migrates the key from `config.json` to `settings.json` on startup, so the entrypoint only re-adds it when missing.
+
+
+If login was not completed, re-run it any time:
+
+```bash
+docker exec -it copilot-proxy sh -c 'copilot login --host "$COPILOT_PROXY_GHE_HOST" --device-code'
+```
+
+The entrypoint skips the login entirely when a valid token is already present (`Already authenticated.` in the logs). Until login completes, API calls return `Not authenticated`.
 
 ## Tool calling
 
@@ -278,10 +285,10 @@ Images represented by `image_url` parts are currently serialized as URL text rat
 
 ## Security
 
-Set `PROXY_API_KEY` if anything other than localhost can reach the proxy:
+Set `COPILOT_PROXY_API_KEY` if anything other than localhost can reach the proxy:
 
 ```bash
-PROXY_API_KEY=replace-with-a-long-random-value
+COPILOT_PROXY_API_KEY=replace-with-a-long-random-value
 ```
 
 Then callers must send:
@@ -291,3 +298,41 @@ Authorization: Bearer replace-with-a-long-random-value
 ```
 
 Do not expose the proxy publicly without authentication. Whoever can reach it can consume the authenticated GitHub Copilot account's quota/AI credits.
+
+## Proxy logging
+
+Proxy logging is controlled independently from the Copilot SDK logging:
+
+```env
+COPILOT_PROXY_LOG_LEVEL=debug
+COPILOT_PROXY_LOG_REQUESTS=true
+```
+
+The current Docker Compose defaults enable request logging. The mounted host directory
+is `./volumes/copilot-proxy-logs/`. It contains:
+
+```text
+volumes/copilot-proxy-logs/
+  copilot-proxy.log
+  opencode/
+  deepseek-harness/
+  open-webui/
+  unknown/
+```
+
+Each captured request gets four JSON files in its adapter directory:
+
+```text
+<timestamp>_input_headers.json
+<timestamp>_input_body.json
+<timestamp>_output_headers.json
+<timestamp>_output_body.json
+```
+
+Authorization, cookie and proxy-authorization headers are replaced with `[REDACTED]`.
+Request bodies are intentionally captured when `COPILOT_PROXY_LOG_REQUESTS=true`, so disable
+that switch in production if prompts or responses must not be persisted.
+
+`COPILOT_PROXY_COPILOT_SDK_LOG_LEVEL` controls only the log level passed to the
+GitHub Copilot SDK. `COPILOT_PROXY_LOG_LEVEL` controls the proxy's own
+`copilot-proxy.log`.

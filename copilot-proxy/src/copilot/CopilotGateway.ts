@@ -3,6 +3,7 @@ import path from "node:path";
 import { CopilotClient, RuntimeConnection, type CopilotSession, type ModelInfo, type Tool } from "@github/copilot-sdk";
 
 import { config } from "../config.js";
+import { proxyLogger } from "../logging/ProxyLogger.js";
 import { buildCopilotInput } from "../openai/serializeMessages.js";
 import type {
     ChatCompletionRequest,
@@ -47,49 +48,61 @@ function mapFinishReason(value: string | undefined, hasToolCalls: boolean): stri
     }
 }
 
+const RUNTIME_START_RETRY_DELAY_MS = 5000;
+
 export class CopilotGateway {
-    readonly #client: CopilotClient;
+    #client: CopilotClient | undefined;
     #started = false;
 
-    constructor() {
-        this.#client = config.copilotRuntimeUrl
-            ? new CopilotClient({
-                  mode: "empty",
-                  connection: RuntimeConnection.forUri(config.copilotRuntimeUrl),
-                  logLevel: config.copilotLogLevel,
-              })
-            : new CopilotClient({
-                  mode: "empty",
-                  baseDirectory: config.copilotHome,
-                  ...(config.githubToken
-                      ? { gitHubToken: config.githubToken, useLoggedInUser: false }
-                      : { useLoggedInUser: true }),
-                  logLevel: config.copilotLogLevel,
-                  sessionIdleTimeoutSeconds: 600,
-              });
+    #runningClient(): CopilotClient {
+        if (!this.#started || !this.#client) throw new Error("Copilot runtime is not started");
+        return this.#client;
+    }
+
+    #createClient(): CopilotClient {
+        return new CopilotClient({
+            mode: "empty",
+            connection: RuntimeConnection.forUri(config.copilotRuntimeUrl),
+            logLevel: config.copilotSdkLogLevel,
+        });
     }
 
     async start(): Promise<void> {
         if (this.#started) return;
         await fs.mkdir(config.copilotHome, { recursive: true });
-        await this.#client.start();
-        this.#started = true;
+        for (;;) {
+            const client = this.#createClient();
+            try {
+                await client.start();
+            } catch (error) {
+                const message = error instanceof Error ? error.message : String(error);
+                console.error(
+                    `Copilot runtime not ready, retrying in ${RUNTIME_START_RETRY_DELAY_MS}ms: ${message}`,
+                );
+                await proxyLogger.log("warning", "Copilot runtime not ready; retrying", { error: message });
+                await new Promise((resolve) => setTimeout(resolve, RUNTIME_START_RETRY_DELAY_MS));
+                continue;
+            }
+            this.#client = client;
+            this.#started = true;
+            return;
+        }
     }
 
     async stop(): Promise<void> {
         if (!this.#started) return;
-        await this.#client.stop();
+        await this.#client?.stop();
         this.#started = false;
     }
 
     async listModels(): Promise<ModelInfo[]> {
         await this.start();
-        return this.#client.listModels();
+        return this.#runningClient().listModels();
     }
 
     async getQuota(): Promise<unknown> {
         await this.start();
-        return this.#client.rpc.account.getQuota({});
+        return this.#runningClient().rpc.account.getQuota({});
     }
 
     async complete(
@@ -158,7 +171,7 @@ export class CopilotGateway {
 
         // mode:"empty" intentionally provides no ambient Copilot CLI tools/skills/MCP.
         // availableTools is mandatory in empty mode, including the [] case.
-        const session = await this.#client.createSession({
+        const session = await this.#runningClient().createSession({
             model: request.model,
             ...(request.reasoning_effort
                 ? {

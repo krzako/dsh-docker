@@ -10,17 +10,17 @@ llm-pi-ai:
       displayName: llm_proxy
       apiKeyEnv: LLM_PROXY_API_KEY
       api: openai-completions
-      baseURL: http://llm_proxy:9090
+      baseURL: http://llm_proxy:10090
       defaultInput: [text, image]
       defaultContextWindow: 131072
       streamIdleTimeoutMs: 600000
 
-#      retryPolicy:
-#        mode: always
-#        backoff:
-#          initialDelayMs: 5000
-#          maxDelayMs: 120000
-#          jitterRatio: 0.2
+      #      retryPolicy:
+      #        mode: always
+      #        backoff:
+      #          initialDelayMs: 5000
+      #          maxDelayMs: 120000
+      #          jitterRatio: 0.2
 
       compat:
         thinkingFormat: chat-template
@@ -45,7 +45,7 @@ llm-pi-ai:
       defaultInput: [text, image]
       apiKeyEnv: COPILOT_PROXY_API_KEY
       api: openai-completions
-      baseURL: http://copilot_proxy:9091/v1
+      baseURL: http://copilot_proxy:10091/v1
       models:
         - id: auto
         - id: claude-opus-4.7

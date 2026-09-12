@@ -1,4 +1,5 @@
 import type { ChatCompletionRequest, OpenAIChatMessage, OpenAIFunctionTool } from "../types/openai.js";
+import { config } from "../config.js";
 
 export class BadRequestError extends Error {
     readonly statusCode = 400;
@@ -11,6 +12,9 @@ function isObject(value: unknown): value is Record<string, unknown> {
 function validateMessages(value: unknown): asserts value is OpenAIChatMessage[] {
     if (!Array.isArray(value) || value.length === 0) {
         throw new BadRequestError("messages must be a non-empty array");
+    }
+    if (value.length > config.maxContextMessages) {
+        throw new BadRequestError(`messages exceeds the ${config.maxContextMessages}-message context limit`);
     }
     for (const [index, message] of value.entries()) {
         if (!isObject(message)) throw new BadRequestError(`messages[${index}] must be an object`);
@@ -63,8 +67,9 @@ function validateToolChoice(value: unknown, tools: OpenAIFunctionTool[] | undefi
         throw new BadRequestError("tool_choice named function is invalid");
     }
 
-    if (!tools?.some((tool) => tool.function.name === value.function.name)) {
-        throw new BadRequestError(`tool_choice references unknown tool: ${value.function.name}`);
+    const chosenName = value.function.name;
+    if (!tools?.some((tool) => tool.function.name === chosenName)) {
+        throw new BadRequestError(`tool_choice references unknown tool: ${chosenName}`);
     }
 }
 
@@ -77,6 +82,9 @@ export function parseChatCompletionRequest(body: unknown): ChatCompletionRequest
     validateTools(body.tools);
     validateReasoningEffort(body.reasoning_effort);
     validateToolChoice(body.tool_choice, body.tools);
+    if (body.metadata !== undefined && !isObject(body.metadata)) {
+        throw new BadRequestError("metadata must be an object");
+    }
 
     if (body.n !== undefined && body.n !== 1) {
         throw new BadRequestError("Only n=1 is supported");

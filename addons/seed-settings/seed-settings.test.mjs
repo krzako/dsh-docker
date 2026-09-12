@@ -21,7 +21,7 @@ import {
 const execFileAsync = promisify(execFile)
 const yaml = loadYaml()
 const SCRIPT_PATH = fileURLToPath(new URL('./seed-settings.mjs', import.meta.url))
-const SEED_PATH = fileURLToPath(new URL('../../settings.seed.yaml', import.meta.url))
+const SEED_PATH = fileURLToPath(new URL('./settings.seed.yaml', import.meta.url))
 
 /** The repository seed text, shared by every fixture. */
 const SEED_TEXT = await fsp.readFile(SEED_PATH, 'utf8')
@@ -75,16 +75,16 @@ const EXISTING_SETTINGS = `ui-onboarding:
   welcomeNoticeVersion: 2026-08-13.1
 llm-pi-ai:
   providers:
-    llama:
-      displayName: LLAMA custom
-      apiKeyEnv: LLAMA_API_KEY
+    llm_proxy:
+      displayName: llm_proxy custom
+      apiKeyEnv: LLM_PROXY_API_KEY
       api: openai-completions
-      baseURL: http://localhost:3099
+      baseURL: http://llm_proxy:9090
       models:
         - id: qwen3.6-35b-mtp
           name: qwen3.6-35b-mtp
 agent-default-model:
-  provider: llama
+  provider: llm_proxy
   model: qwen3.6-35b-mtp
 `
 
@@ -107,7 +107,7 @@ describe('first seed on an absent document', () => {
     assert.deepEqual(yaml.parse(text), SEED)
     // The commented retryPolicy block stays a comment and is never active.
     assert.match(text, /^ *# *retryPolicy:$/m)
-    assert.ok(!('retryPolicy' in yaml.parse(text)['llm-pi-ai'].providers.llama))
+    assert.ok(!('retryPolicy' in yaml.parse(text)['llm-pi-ai'].providers.llm_proxy))
   })
 
   it('seeds verbatim over an existing but empty document', async () => {
@@ -130,36 +130,36 @@ describe('first seed over an existing document', () => {
 
     const text = await readSettings()
     const settings = yaml.parse(text)
-    const llama = settings['llm-pi-ai'].providers.llama
+    const llm_proxy = settings['llm-pi-ai'].providers.llm_proxy
 
     // Unknown user section survives.
     assert.deepEqual(settings['ui-onboarding'], { welcomeNoticeVersion: '2026-08-13.1' })
     // First-seed provider fields overwrite stored values.
-    assert.equal(llama.displayName, 'llama')
-    assert.equal(llama.defaultContextWindow, 131072)
-    assert.equal(llama.streamIdleTimeoutMs, 600000)
+    assert.equal(llm_proxy.displayName, 'llm_proxy')
+    assert.equal(llm_proxy.defaultContextWindow, 131072)
+    assert.equal(llm_proxy.streamIdleTimeoutMs, 600000)
     // Global sections are replaced with seed values.
-    assert.deepEqual(settings['agent-default-model'], { provider: 'llama', model: 'qwen3.8-27b' })
+    assert.deepEqual(settings['agent-default-model'], { provider: 'llm_proxy', model: 'qwen3.8-27b' })
     assert.deepEqual(settings['permission'], SEED.permission)
     assert.deepEqual(settings['ui-theme'], SEED['ui-theme'])
     assert.deepEqual(settings['agent-presets'], SEED['agent-presets'])
     // Always rules applied on the first seed too.
-    assert.deepEqual(llama.defaultInput, ['text', 'image'])
-    assert.deepEqual(llama.compat, SEED['llm-pi-ai'].providers.llama.compat)
+    assert.deepEqual(llm_proxy.defaultInput, ['text', 'image'])
+    assert.deepEqual(llm_proxy.compat, SEED['llm-pi-ai'].providers.llm_proxy.compat)
     // Missing models appended; user models kept.
-    const ids = llama.models.map((m) => m.id)
+    const ids = llm_proxy.models.map((m) => m.id)
     assert.deepEqual(ids, ['qwen3.6-35b-mtp', 'qwen3.8-27b'])
-    // ghe provider added whole.
-    const ghe = settings['llm-pi-ai'].providers.ghe
-    assert.equal(ghe.baseURL, 'http://host.docker.internal:3098/v1')
-    assert.equal(ghe.models.length, SEED['llm-pi-ai'].providers.ghe.models.length)
+    // copilot_proxy provider added whole.
+    const copilot_proxy = settings['llm-pi-ai'].providers.copilot_proxy
+    assert.equal(copilot_proxy.baseURL, 'http://copilot_proxy:9091/v1')
+    assert.equal(copilot_proxy.models.length, SEED['llm-pi-ai'].providers.copilot_proxy.models.length)
     // The commented retryPolicy block was transferred and stays a comment.
     assert.match(text, /^ *# *retryPolicy:$/m)
-    assert.ok(!('retryPolicy' in llama))
+    assert.ok(!('retryPolicy' in llm_proxy))
   })
 
   it('does not duplicate a model that already exists with custom options', async () => {
-    await writeSettings(EXISTING_SETTINGS.replace('agent-default-model:', `    ghe:
+    await writeSettings(EXISTING_SETTINGS.replace('agent-default-model:', `    copilot_proxy:
       models:
         - id: auto
         - id: claude-opus-4.7
@@ -168,12 +168,12 @@ agent-default-model:`))
     await runSeed()
 
     const settings = yaml.parse(await readSettings())
-    const gheModels = settings['llm-pi-ai'].providers.ghe.models
-    const opus = gheModels.find((m) => m.id === 'claude-opus-4.7')
+    const copilotProxyModels = settings['llm-pi-ai'].providers.copilot_proxy.models
+    const opus = copilotProxyModels.find((m) => m.id === 'claude-opus-4.7')
     assert.equal(opus.myCustomOption, 'keep-me')
-    assert.equal(gheModels.filter((m) => m.id === 'claude-opus-4.7').length, 1)
+    assert.equal(copilotProxyModels.filter((m) => m.id === 'claude-opus-4.7').length, 1)
     // Other seed models were appended.
-    assert.ok(gheModels.some((m) => m.id === 'gpt-5.6-sol'))
+    assert.ok(copilotProxyModels.some((m) => m.id === 'gpt-5.6-sol'))
   })
 })
 
@@ -196,7 +196,7 @@ describe('runs after the flag exists', () => {
     const result = await runSeed()
     assert.equal(result.changed, true)
     const settings = yaml.parse(await readSettings())
-    assert.deepEqual(settings['llm-pi-ai'].providers.llama.defaultInput, ['text', 'image'])
+    assert.deepEqual(settings['llm-pi-ai'].providers.llm_proxy.defaultInput, ['text', 'image'])
   })
 
   it('replaces compat every run and keeps the seed as the source of truth', async () => {
@@ -204,7 +204,7 @@ describe('runs after the flag exists', () => {
     const result = await runSeed()
     assert.equal(result.changed, true)
     const settings = yaml.parse(await readSettings())
-    assert.deepEqual(settings['llm-pi-ai'].providers.llama.compat, SEED['llm-pi-ai'].providers.llama.compat)
+    assert.deepEqual(settings['llm-pi-ai'].providers.llm_proxy.compat, SEED['llm-pi-ai'].providers.llm_proxy.compat)
   })
 
   it('appends missing seed models and never touches existing ones', async () => {
@@ -218,43 +218,43 @@ describe('runs after the flag exists', () => {
     assert.equal(result.changed, true)
 
     const settings = yaml.parse(await readSettings())
-    const gheModels = settings['llm-pi-ai'].providers.ghe.models
-    assert.equal(gheModels.find((m) => m.id === 'auto').renamed, true)
-    assert.ok(gheModels.some((m) => m.id === 'gpt-5.6-terra'))
+    const copilotProxyModels = settings['llm-pi-ai'].providers.copilot_proxy.models
+    assert.equal(copilotProxyModels.find((m) => m.id === 'auto').renamed, true)
+    assert.ok(copilotProxyModels.some((m) => m.id === 'gpt-5.6-terra'))
   })
 
   it('re-adds a provider the user deleted, whole from the seed', async () => {
     let text = await readSettings()
-    text = text.replace(/    ghe:\n(      .*\n|\n)+/, '')
+    text = text.replace(/    copilot_proxy:\n(      .*\n|\n)+/, '')
     await writeSettings(text)
 
     const result = await runSeed()
     assert.equal(result.changed, true)
     const settings = yaml.parse(await readSettings())
-    assert.deepEqual(settings['llm-pi-ai'].providers.ghe, SEED['llm-pi-ai'].providers.ghe)
+    assert.deepEqual(settings['llm-pi-ai'].providers.copilot_proxy, SEED['llm-pi-ai'].providers.copilot_proxy)
   })
 
   it('preserves user-only providers, models, and one-time fields', async () => {
     let text = await readSettings()
-    text = text.replace('      displayName: llama', '      displayName: my llama')
+    text = text.replace('      displayName: llm_proxy', '      displayName: my llm_proxy')
     text = text.replace('defaultContextWindow: 131072', 'defaultContextWindow: 999')
-    text = text.replace('    ghe:', '    my-own:\n      displayName: My Own\n      models:\n        - id: my-own-model\n    ghe:')
+    text = text.replace('    copilot_proxy:', '    my-own:\n      displayName: My Own\n      models:\n        - id: my-own-model\n    copilot_proxy:')
     text = text.replace('model: qwen3.8-27b', 'model: my-own-model')
     text = text.replace('preference: dark', 'preference: light')
     await writeSettings(text)
 
     const result = await runSeed()
     const settings = yaml.parse(await readSettings())
-    const llama = settings['llm-pi-ai'].providers.llama
+    const llm_proxy = settings['llm-pi-ai'].providers.llm_proxy
 
     // One-time fields keep the user's edits after the flag exists.
-    assert.equal(llama.displayName, 'my llama')
-    assert.equal(llama.defaultContextWindow, 999)
+    assert.equal(llm_proxy.displayName, 'my llm_proxy')
+    assert.equal(llm_proxy.defaultContextWindow, 999)
     assert.equal(settings['agent-default-model'].model, 'my-own-model')
     assert.equal(settings['ui-theme'].preference, 'light')
     // User-only provider and model survive.
     assert.deepEqual(settings['llm-pi-ai'].providers['my-own'].models, [{ id: 'my-own-model' }])
-    assert.ok(llama.models.some((m) => m.id === 'qwen3.8-27b'))
+    assert.ok(llm_proxy.models.some((m) => m.id === 'qwen3.8-27b'))
     assert.equal(result.firstSeed, false)
   })
 
@@ -263,7 +263,7 @@ describe('runs after the flag exists', () => {
     assert.equal(result.changed, false)
     const text = await readSettings()
     assert.match(text, /^ *# *retryPolicy:$/m)
-    assert.ok(!('retryPolicy' in yaml.parse(text)['llm-pi-ai'].providers.llama))
+    assert.ok(!('retryPolicy' in yaml.parse(text)['llm-pi-ai'].providers.llm_proxy))
   })
 
   it('re-seeds verbatim when the document was deleted while the flag exists', async () => {
@@ -366,11 +366,11 @@ describe('per-provider flags', () => {
   it('creates one flag file per provider, named after its apiKeyEnv', async () => {
     const flagDir = path.join(home, '.dsh', PROVIDER_FLAG_DIR_NAME)
     const files = (await fsp.readdir(flagDir)).sort()
-    assert.deepEqual(files, ['GHE_API_KEY', 'LLAMA_API_KEY'])
+    assert.deepEqual(files, ['COPILOT_PROXY_API_KEY', 'LLM_PROXY_API_KEY'])
   })
 
   it('names flags after apiKeyEnv, falling back to {adapter}_{provider}', () => {
-    assert.equal(providerFlagName('llm-pi-ai', 'llama', SEED['llm-pi-ai'].providers.llama), 'LLAMA_API_KEY')
+    assert.equal(providerFlagName('llm-pi-ai', 'llm_proxy', SEED['llm-pi-ai'].providers.llm_proxy), 'LLM_PROXY_API_KEY')
     assert.equal(providerFlagName('llm-pi-ai', 'local', { api: 'openai-completions' }), 'llm-pi-ai_local')
     assert.equal(providerFlagName('llm-pi-ai', 'local', undefined), 'llm-pi-ai_local')
     assert.equal(providerFlagName('llm-pi-ai', 'local', { apiKeyEnv: 'bad/name' }), 'llm-pi-ai_local')
@@ -378,26 +378,26 @@ describe('per-provider flags', () => {
 
   it('re-applies one-time fields only for the provider whose flag was removed', async () => {
     let text = await readSettings()
-    text = text.replace('      displayName: llama', '      displayName: my llama')
-    text = text.replace('baseURL: http://host.docker.internal:3098/v1', 'baseURL: http://example.internal:1/v1')
+    text = text.replace('      displayName: llm_proxy', '      displayName: my llm_proxy')
+    text = text.replace('baseURL: http://copilot_proxy:9091/v1', 'baseURL: http://example.internal:1/v1')
     text = text.replace('model: qwen3.8-27b', 'model: qwen3.6-35b-mtp')
     await writeSettings(text)
-    await fsp.unlink(seedProviderFlagPath('llm-pi-ai', 'ghe'))
+    await fsp.unlink(seedProviderFlagPath('llm-pi-ai', 'copilot_proxy'))
 
     const result = await runSeed()
     assert.equal(result.changed, true)
 
     const settings = yaml.parse(await readSettings())
     const providers = settings['llm-pi-ai'].providers
-    // llama's flag still exists: its one-time edit survives.
-    assert.equal(providers.llama.displayName, 'my llama')
-    // ghe's flag was removed: the seed re-applied its one-time fields.
-    assert.equal(providers.ghe.baseURL, 'http://host.docker.internal:3098/v1')
-    assert.equal(providers.ghe.apiKeyEnv, 'GHE_API_KEY')
+    // llm_proxy's flag still exists: its one-time edit survives.
+    assert.equal(providers.llm_proxy.displayName, 'my llm_proxy')
+    // copilot_proxy's flag was removed: the seed re-applied its one-time fields.
+    assert.equal(providers.copilot_proxy.baseURL, 'http://copilot_proxy:9091/v1')
+    assert.equal(providers.copilot_proxy.apiKeyEnv, 'COPILOT_PROXY_API_KEY')
     // Global sections stay untouched (global flag still present).
     assert.equal(settings['agent-default-model'].model, 'qwen3.6-35b-mtp')
-    // The ghe flag was recreated after the successful pass.
-    assert.ok(existsSync(seedProviderFlagPath('llm-pi-ai', 'ghe')))
+    // The copilot_proxy flag was recreated after the successful pass.
+    assert.ok(existsSync(seedProviderFlagPath('llm-pi-ai', 'copilot_proxy')))
   })
 })
 
@@ -417,7 +417,7 @@ describe('CLI list and reset modes', () => {
       [SCRIPT_PATH, '--list-providers', '--adapter', 'llm-pi-ai'],
       { env: cliEnv() },
     )
-    assert.deepEqual(providers.stdout.trim().split('\n').sort(), ['ghe', 'llama'])
+    assert.deepEqual(providers.stdout.trim().split('\n').sort(), ['copilot_proxy', 'llm_proxy'])
   })
 
   it('exits non-zero for an unknown adapter or provider', async () => {
@@ -438,12 +438,12 @@ describe('CLI list and reset modes', () => {
   it('removes only the selected provider flag via --reset-api-key', async () => {
     await writeSettings(EXISTING_SETTINGS)
     await runSeed()
-    const args = [SCRIPT_PATH, '--reset-api-key', '--adapter', 'llm-pi-ai', '--provider', 'llama']
+    const args = [SCRIPT_PATH, '--reset-api-key', '--adapter', 'llm-pi-ai', '--provider', 'llm_proxy']
 
     const removed = await execFileAsync(process.execPath, args, { env: cliEnv() })
-    assert.match(removed.stdout, /Removed api-key flag: .*LLAMA_API_KEY/)
-    assert.ok(!existsSync(seedProviderFlagPath('llm-pi-ai', 'llama')))
-    assert.ok(existsSync(seedProviderFlagPath('llm-pi-ai', 'ghe')))
+    assert.match(removed.stdout, /Removed api-key flag: .*LLM_PROXY_API_KEY/)
+    assert.ok(!existsSync(seedProviderFlagPath('llm-pi-ai', 'llm_proxy')))
+    assert.ok(existsSync(seedProviderFlagPath('llm-pi-ai', 'copilot_proxy')))
 
     const again = await execFileAsync(process.execPath, args, { env: cliEnv() })
     assert.match(again.stdout, /No api-key flag present/)
@@ -454,17 +454,17 @@ describe('CLI list and reset modes', () => {
     await runSeed()
     await execFileAsync(
       process.execPath,
-      [SCRIPT_PATH, '--reset-api-key', '--adapter', 'llm-pi-ai', '--provider', 'llama'],
+      [SCRIPT_PATH, '--reset-api-key', '--adapter', 'llm-pi-ai', '--provider', 'llm_proxy'],
       { env: cliEnv() },
     )
 
     let text = await readSettings()
-    text = text.replace('      displayName: llama', '      displayName: user renamed')
+    text = text.replace('      displayName: llm_proxy', '      displayName: user renamed')
     await writeSettings(text)
 
     const result = await runSeed()
     assert.equal(result.changed, true)
     const settings = yaml.parse(await readSettings())
-    assert.equal(settings['llm-pi-ai'].providers.llama.displayName, 'llama')
+    assert.equal(settings['llm-pi-ai'].providers.llm_proxy.displayName, 'llm_proxy')
   })
 })
