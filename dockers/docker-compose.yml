@@ -102,8 +102,10 @@ services:
     image: searxng/searxng:latest
     container_name: searxng
     restart: unless-stopped
+    entrypoint: ["/bin/sh", "/usr/local/searxng/entrypoint-custom.sh"]
     volumes:
       - ../volumes/searxng:/etc/searxng:rw
+      - ./searxng/entrypoint.sh:/usr/local/searxng/entrypoint-custom.sh:ro
 
   open-terminal:
     image: ghcr.io/open-webui/open-terminal:latest
