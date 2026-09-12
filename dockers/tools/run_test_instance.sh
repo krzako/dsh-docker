@@ -7,8 +7,8 @@
 # `docker compose up`.
 #
 # Then it asks whether to remove the old test volumes:
-#   ./volumes/workspaces-test      (bind mount)
-#   ./volumes/dsh-git-repos-test   (bind mount)
+#   ../volumes/workspaces-test      (bind mount)
+#   ../volumes/dsh-git-repos-test   (bind mount)
 #   dsh-home-test                  (named volume)
 #
 # Typing exactly `yes` removes all of them (test containers are stopped and
@@ -27,8 +27,8 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 COMPOSE_FILE="${DSH_TEST_COMPOSE_FILE:-docker-compose.test.yml}"
-TEST_WORKSPACES="./volumes/workspaces-test"
-TEST_GIT_REPOS="./volumes/dsh-git-repos-test"
+TEST_WORKSPACES="../volumes/workspaces-test"
+TEST_GIT_REPOS="../volumes/dsh-git-repos-test"
 TEST_DSH_HOME_VOLUME="dsh-home-test"
 # Host ports of the test instance: production ports plus 1000 (keep in sync
 # with docker-compose.test.yml).

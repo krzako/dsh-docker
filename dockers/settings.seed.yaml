@@ -10,7 +10,7 @@ llm-pi-ai:
       displayName: llm_proxy
       apiKeyEnv: LLM_PROXY_API_KEY
       api: openai-completions
-      baseURL: http://llm_proxy:9090
+      baseURL: http://llm-proxy:9090
       defaultInput: [text, image]
       defaultContextWindow: 131072
       streamIdleTimeoutMs: 600000
@@ -40,12 +40,17 @@ llm-pi-ai:
             low: "low"
             medium: "medium"
             xhigh: "xhigh"
+        - id: qwen3.6-35b-a3b
+          name: qwen3.6-35b-a3b
+          reasoningEfforts:
+            off: "none"
+            xhigh: "xhigh"
 
     copilot_proxy:
       defaultInput: [text, image]
       apiKeyEnv: COPILOT_PROXY_API_KEY
       api: openai-completions
-      baseURL: http://copilot_proxy:9091/v1
+      baseURL: http://copilot-proxy:9091/v1
       models:
         - id: auto
         - id: claude-opus-4.7

@@ -9,8 +9,8 @@
 #                                  10418 (git daemon) -- production ports
 #                                  plus 1000, so both instances can run at
 #                                  the same time
-#   data volumes (all -test)       ./volumes/workspaces-test      (bind)
-#                                  ./volumes/dsh-git-repos-test   (bind)
+#   data volumes (all -test)       ../volumes/workspaces-test      (bind)
+#                                  ../volumes/dsh-git-repos-test   (bind)
 #                                  dsh-home-test                  (named)
 #
 # The settings seed file is shared with the production instance (read-only).
@@ -26,8 +26,8 @@ services:
     build:
       context: .
       additional_contexts:
-        dsh_source: "${DSH_SOURCE:-./deepseek-harness}"
-        dsh_docker_git_source: "${DSH_DOCKER_GIT_SOURCE:-./.git/modules/deepseek-harness}"
+        dsh_source: "${DSH_SOURCE:-../deepseek-harness}"
+        dsh_docker_git_source: "${DSH_DOCKER_GIT_SOURCE:-../.git/modules/deepseek-harness}"
 
     image: ${DSH_TEST_IMAGE:-deepseek-harness:test}
     container_name: dsh-test
@@ -46,15 +46,11 @@ services:
       - "127.0.0.1:4310-4330:3310-3330"
 
     volumes:
-      - "./volumes/workspaces-test:/home/node"
+      - "../volumes/workspaces-test:/home/node"
       - "dsh-home-test:/home/node/.dsh"
       # Settings seed for the startup merge; mounted read-only so host edits
       # apply without rebuilding the image.
       - "./settings.seed.test.yaml:/opt/dsh-seed/settings.seed.yaml:ro"
-
-    networks:
-      - default
-      - dsh_git_test
 
     stdin_open: true
     tty: true
@@ -71,13 +67,11 @@ services:
       HOME: /tmp
     volumes:
       - type: bind
-        source: ./volumes/dsh-git-repos-test
+        source: ../volumes/dsh-git-repos-test
         target: /repos
     ports:
       # git daemon (production 9418 + 1000)
       - "127.0.0.1:10418:9418"
-    networks:
-      - dsh_git_test
     read_only: true
     tmpfs:
       - /tmp:rw,nosuid,nodev,noexec,size=16m
@@ -93,7 +87,7 @@ services:
     container_name: open-webui-test
     restart: unless-stopped
     ports:
-      - "127.0.0.1:${OPEN_WEBUI_PORT:-10999}:8080"
+      - "127.0.0.1:10999:8080"
     environment:
       WEBUI_URL: "http://localhost:10999"
       WEBUI_AUTH: "true"
@@ -110,7 +104,7 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
-      - ./volumes/open-webui-test:/app/backend/data
+      - ../volumes/open-webui-test:/app/backend/data
 
   llm-proxy:
     build: ./llm-proxy
@@ -120,9 +114,10 @@ services:
     ports:
       - "127.0.0.1:10090:9090"
     environment:
+      LLM_PROXY_UPSTREAM: "${LLM_PROXY_UPSTREAM}"
       LLM_PROXY_HOST: "0.0.0.0"
     volumes:
-      - ./volumes/llm-proxy-test:/app/requests
+      - ../volumes/llm-proxy-test:/app/requests
 
   copilot-proxy:
     build: ./copilot-proxy
@@ -141,14 +136,14 @@ services:
       COPILOT_PROXY_LOG_REQUESTS: "${COPILOT_PROXY_LOG_REQUESTS:-true}"
     volumes:
       - copilot-proxy-data-test:/home/node/.copilot
-      - ./volumes/copilot-proxy-logs-test:/app/logs/copilot-proxy
+      - ../volumes/copilot-proxy-logs-test:/app/logs/copilot-proxy
 
   searxng:
     image: searxng/searxng:latest
-    container_name: searxng
+    container_name: searxng-test
     restart: unless-stopped
     volumes:
-      - ./volumes/searxng-test:/etc/searxng:rw
+      - ../volumes/searxng-test:/etc/searxng:rw
 
   open-terminal:
     image: ghcr.io/open-webui/open-terminal:latest
@@ -157,12 +152,7 @@ services:
     environment:
       OPEN_TERMINAL_API_KEY: "${OPEN_TERMINAL_API_KEY}"
     volumes:
-      - ./volumes/open-terminal-test:/home/user
-    
-
-networks:
-  dsh_git_test:
-    name: dsh_git_test
+      - ../volumes/open-terminal-test:/home/user
 
 volumes:
   dsh-home-test:

@@ -79,13 +79,13 @@ llm-pi-ai:
       displayName: llm_proxy custom
       apiKeyEnv: LLM_PROXY_API_KEY
       api: openai-completions
-      baseURL: http://llm_proxy:9090
+      baseURL: http://llm-proxy:9090
       models:
-        - id: qwen3.6-35b-mtp
-          name: qwen3.6-35b-mtp
+        - id: qwen3.6-35b-a3b
+          name: qwen3.6-35b-a3b
 agent-default-model:
   provider: llm_proxy
-  model: qwen3.6-35b-mtp
+  model: qwen3.6-35b-a3b
 `
 
 beforeEach(async () => {
@@ -148,10 +148,10 @@ describe('first seed over an existing document', () => {
     assert.deepEqual(llm_proxy.compat, SEED['llm-pi-ai'].providers.llm_proxy.compat)
     // Missing models appended; user models kept.
     const ids = llm_proxy.models.map((m) => m.id)
-    assert.deepEqual(ids, ['qwen3.6-35b-mtp', 'qwen3.8-27b'])
+    assert.deepEqual(ids, ['qwen3.6-35b-a3b', 'qwen3.8-27b'])
     // copilot_proxy provider added whole.
     const copilot_proxy = settings['llm-pi-ai'].providers.copilot_proxy
-    assert.equal(copilot_proxy.baseURL, 'http://copilot_proxy:9091/v1')
+    assert.equal(copilot_proxy.baseURL, 'http://copilot-proxy:9091/v1')
     assert.equal(copilot_proxy.models.length, SEED['llm-pi-ai'].providers.copilot_proxy.models.length)
     // The commented retryPolicy block was transferred and stays a comment.
     assert.match(text, /^ *# *retryPolicy:$/m)
@@ -379,8 +379,8 @@ describe('per-provider flags', () => {
   it('re-applies one-time fields only for the provider whose flag was removed', async () => {
     let text = await readSettings()
     text = text.replace('      displayName: llm_proxy', '      displayName: my llm_proxy')
-    text = text.replace('baseURL: http://copilot_proxy:9091/v1', 'baseURL: http://example.internal:1/v1')
-    text = text.replace('model: qwen3.8-27b', 'model: qwen3.6-35b-mtp')
+    text = text.replace('baseURL: http://copilot-proxy:9091/v1', 'baseURL: http://example.internal:1/v1')
+    text = text.replace('model: qwen3.8-27b', 'model: qwen3.6-35b-a3b')
     await writeSettings(text)
     await fsp.unlink(seedProviderFlagPath('llm-pi-ai', 'copilot_proxy'))
 
@@ -392,10 +392,10 @@ describe('per-provider flags', () => {
     // llm_proxy's flag still exists: its one-time edit survives.
     assert.equal(providers.llm_proxy.displayName, 'my llm_proxy')
     // copilot_proxy's flag was removed: the seed re-applied its one-time fields.
-    assert.equal(providers.copilot_proxy.baseURL, 'http://copilot_proxy:9091/v1')
+    assert.equal(providers.copilot_proxy.baseURL, 'http://copilot-proxy:9091/v1')
     assert.equal(providers.copilot_proxy.apiKeyEnv, 'COPILOT_PROXY_API_KEY')
     // Global sections stay untouched (global flag still present).
-    assert.equal(settings['agent-default-model'].model, 'qwen3.6-35b-mtp')
+    assert.equal(settings['agent-default-model'].model, 'qwen3.6-35b-a3b')
     // The copilot_proxy flag was recreated after the successful pass.
     assert.ok(existsSync(seedProviderFlagPath('llm-pi-ai', 'copilot_proxy')))
   })

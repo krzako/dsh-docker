@@ -8,8 +8,8 @@ services:
     build:
       context: .
       additional_contexts:
-        dsh_source: "${DSH_SOURCE:-./deepseek-harness}"
-        dsh_docker_git_source: "${DSH_DOCKER_GIT_SOURCE:-./.git/modules/deepseek-harness}"
+        dsh_source: "${DSH_SOURCE:-../deepseek-harness}"
+        dsh_docker_git_source: "${DSH_DOCKER_GIT_SOURCE:-../.git/modules/deepseek-harness}"
 
     image: ${DSH_IMAGE:-deepseek-harness:latest}
     container_name: dsh
@@ -29,7 +29,7 @@ services:
       - "127.0.0.1:3310-3330:3310-3330"
 
     volumes:
-      - "./volumes/workspaces:/home/node"
+      - "../volumes/workspaces:/home/node"
       - "dsh-home:/home/node/.dsh"
       # Settings seed for the startup merge; mounted read-only so host edits
       # apply without rebuilding the image.
@@ -64,7 +64,7 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
-      - ./volumes/open-webui:/app/backend/data
+      - ../volumes/open-webui:/app/backend/data
 
   llm-proxy:
     build: ./llm-proxy
@@ -77,7 +77,7 @@ services:
       LLM_PROXY_UPSTREAM: "${LLM_PROXY_UPSTREAM}"
       LLM_PROXY_HOST: "0.0.0.0"
     volumes:
-      - ./volumes/llm-proxy:/app/requests
+      - ../volumes/llm-proxy:/app/requests
 
   copilot-proxy:
     build: ./copilot-proxy
@@ -96,14 +96,14 @@ services:
       COPILOT_PROXY_LOG_REQUESTS: "${COPILOT_PROXY_LOG_REQUESTS:-true}"
     volumes:
       - copilot-proxy-data:/home/node/.copilot
-      - ./volumes/copilot-proxy-logs:/app/logs/copilot-proxy
+      - ../volumes/copilot-proxy-logs:/app/logs/copilot-proxy
 
   searxng:
     image: searxng/searxng:latest
     container_name: searxng
     restart: unless-stopped
     volumes:
-      - ./volumes/searxng:/etc/searxng:rw
+      - ../volumes/searxng:/etc/searxng:rw
 
   open-terminal:
     image: ghcr.io/open-webui/open-terminal:latest
@@ -112,7 +112,7 @@ services:
     environment:
       OPEN_TERMINAL_API_KEY: "${OPEN_TERMINAL_API_KEY}"
     volumes:
-      - ./volumes/open-terminal:/home/user
+      - ../volumes/open-terminal:/home/user
 
 volumes:
   dsh-home:
