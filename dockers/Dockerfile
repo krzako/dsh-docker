@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1
+# syntax=docker/dockerfile:1.7-labs
 
 # =============================================================================
 # External service images used only as artifact sources
@@ -61,44 +61,39 @@ RUN apt-get update \
 
 WORKDIR /opt/deepseek-harness
 
-# Copy the DSH source tree supplied by docker-compose as dsh_source.
+COPY --parents --from=dsh_source \
+    /package.json \
+    /pnpm* \
+    /patches/* \
+    /scripts/install-lefthook.mjs \
+    /vendor/*/package.json \
+    /packages/*/*/package.json \
+    /packages/subprocess/subprocess-local/scripts/* \
+    /native/landlock-run/package.json \
+    /native/landlock-run/packages/*/package.json \
+    /apps/*/package.json \
+    /website/package.json \
+    /python/sdk-runtime/package.json \
+    /opt/deepseek-harness/
+
+RUN CI=true npx -y pnpm@11.7.0 install --frozen-lockfile
+
+ARG DSH_COMMIT_HASH
+
+RUN set -eu; \
+    if [ -z "${DSH_COMMIT_HASH}" ]; then \
+        echo "ERROR: DSH_COMMIT_HASH build ARG is empty." >&2; \
+        echo "The start scripts set it automatically (git rev-parse HEAD in the" >&2; \
+        echo "dsh_source checkout). For a plain docker build pass it explicitly:" >&2; \
+        echo "  docker build --build-arg DSH_COMMIT_HASH=\$(git -C <dsh-source> rev-parse HEAD) ..." >&2; \
+        exit 1; \
+    fi;
+
 COPY --from=dsh_source / /opt/deepseek-harness/
 
-# Install dependencies without running lifecycle scripts yet.
-RUN CI=true npx -y pnpm@11.7.0 install \
-    --frozen-lockfile
-
-# Determine the real Git commit used for the build.
-#
-# Preferred:
-#   dsh_source itself contains usable Git metadata.
-#
-# Fallback:
-#   dsh_source is a Git submodule whose .git file points outside its Docker
-#   build context. In that case use dsh_docker_git_source, which points to the
-#   real host-side Git directory for the submodule.
-#
-# DSH_CLIENT_COMMIT_HASH prevents the DSH build script from having to run
-# `git rev-parse HEAD` against the copied source tree.
-RUN --mount=type=bind,from=dsh_source,target=/tmp/dsh-source,ro \
-    --mount=type=bind,from=dsh_docker_git_source,target=/tmp/dsh-docker-git-source,ro \
-    set -eu; \
-    \
-    if DSH_COMMIT="$(git -C /tmp/dsh-source rev-parse --verify HEAD 2>/dev/null)"; then \
-        echo "Using Git metadata from dsh_source"; \
-    elif DSH_COMMIT="$(git \
-        --git-dir=/tmp/dsh-docker-git-source \
-        --work-tree=/tmp/dsh-source \
-        rev-parse --verify HEAD 2>/dev/null)"; then \
-        echo "Using fallback Git metadata from dsh_docker_git_source"; \
-    else \
-        echo "ERROR: Cannot determine DSH Git commit." >&2; \
-        echo "Neither dsh_source nor dsh_docker_git_source contains usable Git metadata." >&2; \
-        exit 1; \
-    fi; \
-    \
-    echo "Building DSH commit: ${DSH_COMMIT}"; \
-    DSH_CLIENT_COMMIT_HASH="${DSH_COMMIT}" \
+RUN echo "Building DSH commit: ${DSH_COMMIT_HASH}"; \
+    CI=true npx -y pnpm@11.7.0 install --frozen-lockfile && \
+    CI=true DSH_CLIENT_COMMIT_HASH="${DSH_COMMIT_HASH}" \
         npx -y pnpm@11.7.0 build
 
 
@@ -280,34 +275,6 @@ RUN corepack enable \
     && corepack prepare pnpm@11.7.0 --activate
 
 
-# -----------------------------------------------------------------------------
-# DSH runtime
-# -----------------------------------------------------------------------------
-
-ENV DSH_TELEMETRY_DISABLED=1 \
-    DSH_TELEMETRY_MODE=DISABLED \
-    DSH_SOURCE_DIR=/opt/deepseek-harness
-
-COPY --from=builder --chown=node:node \
-    /opt/deepseek-harness \
-    /opt/deepseek-harness
-
-RUN mkdir -p /home/node/.dsh \
-    && chown -R node:node /home/node/.dsh
-
-# Agent-readable documentation of the bundled development environment.
-COPY --chown=node:node environment.md /home/node/environment.md
-ENV AGENT_ENVIRONMENT_FILE=/home/node/environment.md
-
-COPY --chown=node:node entrypoint.sh /usr/local/bin/dsh-entrypoint
-RUN chmod 0555 /usr/local/bin/dsh-entrypoint
-
-# Settings seed: merged into $DSH_HOME/settings.yaml at every container start.
-COPY --chown=node:node settings.seed.yaml /opt/dsh-seed/settings.seed.yaml
-COPY --chown=node:node addons/seed-settings/seed-settings.mjs /opt/dsh-seed/seed-settings.mjs
-COPY --chown=node:node addons/seed-settings/seed-settings.test.mjs /opt/dsh-seed/seed-settings.test.mjs
-RUN cd /opt/dsh-seed && node --test seed-settings.test.mjs
-
 # Build-time sanity checks for the bundled toolchain/services.
 RUN node --version \
     && pnpm --version \
@@ -321,9 +288,7 @@ RUN node --version \
     && redis-cli --version \
     && traefik version \
     && minio --version \
-    && mc --version \
-    && node --check /opt/dsh-seed/seed-settings.mjs \
-    && test -f /opt/dsh-seed/settings.seed.yaml
+    && mc --version
 
 USER root
 
@@ -376,7 +341,37 @@ ENV DSH_PDF_CHROME_NO_SANDBOX=1
 
 USER node
 WORKDIR /home/node
-
 EXPOSE 3080
+
+# -----------------------------------------------------------------------------
+# DSH runtime
+# -----------------------------------------------------------------------------
+
+ENV DSH_TELEMETRY_DISABLED=1 \
+    DSH_TELEMETRY_MODE=DISABLED \
+    DSH_SOURCE_DIR=/opt/deepseek-harness
+
+COPY --from=builder --chown=node:node \
+    /opt/deepseek-harness \
+    /opt/deepseek-harness
+
+RUN mkdir -p /home/node/.dsh \
+    && chown -R node:node /home/node/.dsh
+
+# Agent-readable documentation of the bundled development environment.
+COPY --chown=node:node environment.md /home/node/environment.md
+ENV AGENT_ENVIRONMENT_FILE=/home/node/environment.md
+
+COPY --chown=node:node entrypoint.sh /usr/local/bin/dsh-entrypoint
+RUN chmod 0555 /usr/local/bin/dsh-entrypoint
+
+# Settings seed: merged into $DSH_HOME/settings.yaml at every container start.
+COPY --chown=node:node settings.seed.yaml /opt/dsh-seed/settings.seed.yaml
+COPY --chown=node:node addons/seed-settings/seed-settings.mjs /opt/dsh-seed/seed-settings.mjs
+COPY --chown=node:node addons/seed-settings/seed-settings.test.mjs /opt/dsh-seed/seed-settings.test.mjs
+RUN cd /opt/dsh-seed && node --test seed-settings.test.mjs
+
+RUN node --check /opt/dsh-seed/seed-settings.mjs \
+    && test -f /opt/dsh-seed/settings.seed.yaml
 
 ENTRYPOINT ["/usr/local/bin/dsh-entrypoint"]

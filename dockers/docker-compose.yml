@@ -9,7 +9,8 @@ services:
       context: .
       additional_contexts:
         dsh_source: "${DSH_SOURCE:-../deepseek-harness}"
-        dsh_docker_git_source: "${DSH_DOCKER_GIT_SOURCE:-../.git/modules/deepseek-harness}"
+      args:
+        DSH_COMMIT_HASH: "${DSH_COMMIT_HASH:-}"
 
     image: ${DSH_IMAGE:-deepseek-harness:latest}
     container_name: dsh

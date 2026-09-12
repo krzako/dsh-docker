@@ -3,8 +3,7 @@
 # Start the DSH test instance (docker-compose.test.yml, project dsh-test).
 #
 # At startup the script first asks whether to rebuild the images before
-# starting; typing exactly `yes` adds `--build` to the final
-# `docker compose up`.
+# starting; typing exactly `yes` will rebuild before `docker compose up`.
 #
 # Then it asks whether to remove the old test volumes:
 #   every directory in ../volumes whose name ends in `-test` (the test
@@ -28,6 +27,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 COMPOSE_FILE="${DSH_TEST_COMPOSE_FILE:-docker-compose.test.yml}"
+
 # The only path to the host volumes directory: every bind-mount directory of
 # the test instance lives in there as "<name>-test".
 VOLUMES_DIR="../volumes"
@@ -134,16 +134,16 @@ check_test_ports_free
 
 # Rebuild the images before starting?
 rebuild="$(ask "Rebuild the images before starting? Type 'yes' to rebuild: ")"
-up_args=()
-if [[ "$rebuild" == "yes" ]]; then
-  echo "The images will be rebuilt before starting (--build)."
-  up_args+=( --build )
-else
-  echo "Skipping the rebuild (existing images will be used)."
-fi
 
 # Remove the old test volumes?
 answer="$(ask "Remove the old test volumes first? Type 'yes' to remove: ")"
+
+if [[ "$rebuild" == "yes" ]]; then
+  echo "The images will be rebuilt before starting."
+  ./tools/build_test_instance.sh
+else
+  echo "Skipping the rebuild (existing images will be used)."
+fi
 
 if [[ "$answer" == "yes" ]]; then
   echo "Removing old test volumes..."
@@ -162,4 +162,4 @@ else
 fi
 
 echo "Starting the test instance in the foreground (Ctrl+C to stop)..."
-compose up "${up_args[@]}"
+compose up
