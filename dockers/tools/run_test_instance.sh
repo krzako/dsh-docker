@@ -7,12 +7,13 @@
 # `docker compose up`.
 #
 # Then it asks whether to remove the old test volumes:
-#   ../volumes/workspaces-test      (bind mount)
-#   ../volumes/dsh-git-repos-test   (bind mount)
-#   dsh-home-test                  (named volume)
+#   every directory in ../volumes whose name ends in `-test` (the test
+#   instance's bind mounts -- discovered dynamically, nothing hardcoded)
+#   plus the named volumes of the dsh-test compose project.
 #
-# Typing exactly `yes` removes all of them (test containers are stopped and
-# removed together with the named volume via `docker compose down -v`).
+# Typing exactly `yes` stops the test stack with `docker compose down -v`
+# (removing the test containers together with the named volumes) and deletes
+# every `-test` directory found in the volumes dir.
 # Any other answer keeps the volumes untouched. Every answer is echoed
 # back, and the stack is then started in the foreground.
 #
@@ -27,9 +28,9 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 COMPOSE_FILE="${DSH_TEST_COMPOSE_FILE:-docker-compose.test.yml}"
-TEST_WORKSPACES="../volumes/workspaces-test"
-TEST_GIT_REPOS="../volumes/dsh-git-repos-test"
-TEST_DSH_HOME_VOLUME="dsh-home-test"
+# The only path to the host volumes directory: every bind-mount directory of
+# the test instance lives in there as "<name>-test".
+VOLUMES_DIR="../volumes"
 # Host ports of the test instance: production ports plus 1000 (keep in sync
 # with docker-compose.test.yml).
 TEST_WEB_PORT="4080"
@@ -43,6 +44,18 @@ export MSYS2_ARG_CONV_EXCL='*'
 
 compose() {
   docker compose -f "$COMPOSE_FILE" "$@"
+}
+
+# List every directory under $VOLUMES_DIR whose name ends in "-test"
+# (e.g. workspaces-test, searxng-test): the test instance's bind mounts.
+# Directory names are discovered dynamically -- nothing is hardcoded.
+collect_test_volume_dirs() {
+  local dir
+  [[ -d "$VOLUMES_DIR" ]] || return 0
+  for dir in "$VOLUMES_DIR"/*-test; do
+    [[ -d "$dir" ]] || continue
+    printf '%s\n' "$dir"
+  done
 }
 
 # Strip leading/trailing whitespace.
@@ -134,11 +147,16 @@ answer="$(ask "Remove the old test volumes first? Type 'yes' to remove: ")"
 
 if [[ "$answer" == "yes" ]]; then
   echo "Removing old test volumes..."
-  # Stops and removes the test containers together with every volume of the
-  # dsh-test project (the named dsh-home-test volume).
+  # Stops and removes the test containers together with every named volume
+  # of the dsh-test project (compose down -v).
   compose down -v --remove-orphans
-  rm -rf "$TEST_WORKSPACES" "$TEST_GIT_REPOS"
-  echo "Removed the old test volumes: $TEST_WORKSPACES, $TEST_GIT_REPOS and the named volume $TEST_DSH_HOME_VOLUME."
+  mapfile -t test_dirs < <(collect_test_volume_dirs)
+  if (( ${#test_dirs[@]} > 0 )); then
+    rm -rf -- "${test_dirs[@]}"
+    echo "Removed the old test volume directories: ${test_dirs[*]}"
+  else
+    echo "No `-test` directories found in $VOLUMES_DIR."
+  fi
 else
   echo "Keeping the existing test volumes (they were not removed)."
 fi
