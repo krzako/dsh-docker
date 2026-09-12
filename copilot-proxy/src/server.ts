@@ -3,10 +3,16 @@ import http, { type IncomingMessage, type ServerResponse } from "node:http";
 
 import { config } from "./config.js";
 import { CopilotGateway } from "./copilot/CopilotGateway.js";
+import { toCanonicalRequest } from "./conversations/adapters.js";
+import { ConversationStore } from "./conversations/ConversationStore.js";
+import { identifySource, IdentifierConflictError } from "./conversations/identifiers.js";
+import { ConversationConflictError } from "./conversations/types.js";
+import { proxyLogger, type LogSource } from "./logging/ProxyLogger.js";
 import { BadRequestError, parseChatCompletionRequest } from "./openai/validation.js";
 import type { ProxyToolCall, ProxyUsage } from "./types/openai.js";
 
 const gateway = new CopilotGateway();
+const conversations = new ConversationStore();
 
 function json(res: ServerResponse, status: number, payload: unknown): void {
     const body = JSON.stringify(payload);
@@ -28,13 +34,9 @@ function authorized(req: IncomingMessage): boolean {
 }
 
 async function readJson(req: IncomingMessage): Promise<unknown> {
-    let size = 0;
     const chunks: Buffer[] = [];
     for await (const chunk of req) {
-        const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
-        size += buffer.length;
-        if (size > config.maxBodyBytes) throw new BadRequestError("Request body too large");
-        chunks.push(buffer);
+        chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
     }
     const text = Buffer.concat(chunks).toString("utf8");
     try {
@@ -70,8 +72,93 @@ function openAIToolCalls(calls: ProxyToolCall[]) {
     }));
 }
 
-function sse(res: ServerResponse, payload: unknown): void {
-    res.write(`data: ${JSON.stringify(payload)}\n\n`);
+function sse(res: ServerResponse, payload: unknown, capture?: string[]): void {
+    const event = `data: ${JSON.stringify(payload)}\n\n`;
+    capture?.push(event);
+    res.write(event);
+}
+
+async function recordRequest(
+    source: LogSource,
+    req: IncomingMessage,
+    inputBody: unknown,
+    outputHeaders: Record<string, unknown>,
+    outputBody: unknown,
+): Promise<void> {
+    try {
+        await proxyLogger.recordRequest(source, req, inputBody, outputHeaders, outputBody);
+    } catch (error) {
+        console.error("Failed to write proxy request log", error);
+    }
+}
+
+async function unknownSourceMessage(
+    request: { model: string; stream?: boolean; stream_options?: { include_usage?: boolean } },
+    req: IncomingMessage,
+    inputBody: unknown,
+    res: ServerResponse,
+): Promise<void> {
+    const id = `chatcmpl-${crypto.randomUUID().replaceAll("-", "")}`;
+    const created = Math.floor(Date.now() / 1000);
+    const content = "Copilot Proxy: Unable to recognize source";
+    if (!request.stream) {
+        const responseBody = {
+            id,
+            object: "chat.completion",
+            created,
+            model: request.model,
+            choices: [
+                {
+                    index: 0,
+                    message: { role: "assistant", content },
+                    finish_reason: "stop",
+                },
+            ],
+            usage: {
+                prompt_tokens: 0,
+                completion_tokens: 0,
+                total_tokens: 0,
+            },
+        };
+        json(res, 200, responseBody);
+        await recordRequest("unknown", req, inputBody, res.getHeaders(), responseBody);
+        return;
+    }
+
+    res.writeHead(200, {
+        "content-type": "text/event-stream; charset=utf-8",
+        "cache-control": "no-cache, no-transform",
+        connection: "keep-alive",
+    });
+    const output: string[] = [];
+    sse(res, {
+        id,
+        object: "chat.completion.chunk",
+        created,
+        model: request.model,
+        choices: [{ index: 0, delta: { role: "assistant", content }, finish_reason: null }],
+    }, output);
+    sse(res, {
+        id,
+        object: "chat.completion.chunk",
+        created,
+        model: request.model,
+        choices: [{ index: 0, delta: {}, finish_reason: "stop" }],
+    }, output);
+    if (request.stream_options?.include_usage) {
+        sse(res, {
+            id,
+            object: "chat.completion.chunk",
+            created,
+            model: request.model,
+            choices: [],
+            usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
+        }, output);
+    }
+    output.push("data: [DONE]\n\n");
+    res.write("data: [DONE]\n\n");
+    res.end();
+    await recordRequest("unknown", req, inputBody, res.getHeaders(), output);
 }
 
 async function handleModels(res: ServerResponse): Promise<void> {
@@ -98,7 +185,33 @@ async function handleModels(res: ServerResponse): Promise<void> {
 }
 
 async function handleChat(req: IncomingMessage, res: ServerResponse): Promise<void> {
-    const request = parseChatCompletionRequest(await readJson(req));
+    const inputBody = await readJson(req);
+    const request = parseChatCompletionRequest(inputBody);
+    const source = identifySource(req, request);
+    await proxyLogger.log("debug", "request received", {
+        method: req.method,
+        url: req.url,
+        source: source ?? "unknown",
+    });
+    if (!source) {
+        await unknownSourceMessage(request, req, inputBody, res);
+        return;
+    }
+    const canonical = toCanonicalRequest(req, request);
+    canonical.conversationId = await conversations.resolve(
+        canonical.source,
+        canonical.userId,
+        canonical.external,
+        typeof request.metadata?.conversation_id === "string"
+            ? request.metadata.conversation_id
+            : request.conversation_id,
+        canonical.requestId,
+    );
+    const requestState = await conversations.recordRequest(canonical);
+    if (requestState === "duplicate") {
+        throw new BadRequestError(`Duplicate request_id: ${canonical.requestId}`);
+    }
+    res.setHeader("x-request-id", canonical.requestId);
     const id = `chatcmpl-${crypto.randomUUID().replaceAll("-", "")}`;
     const created = Math.floor(Date.now() / 1000);
     const controller = new AbortController();
@@ -108,35 +221,62 @@ async function handleChat(req: IncomingMessage, res: ServerResponse): Promise<vo
     });
 
     if (!request.stream) {
-        const result = await gateway.complete(request, {}, controller.signal);
-        json(res, 200, {
-            id,
-            object: "chat.completion",
-            created,
-            model: request.model,
-            choices: [
-                {
-                    index: 0,
-                    message: {
-                        role: "assistant",
-                        content: result.content || null,
-                        ...(result.toolCalls.length > 0
-                            ? { tool_calls: openAIToolCalls(result.toolCalls) }
-                            : {}),
+        try {
+            const result = await gateway.complete(request, {}, controller.signal);
+            await conversations.appendAssistant(canonical.conversationId, {
+                role: "assistant",
+                content: result.content || null,
+                ...(result.toolCalls.length > 0
+                    ? {
+                          tool_calls: result.toolCalls.map((call) => ({
+                              id: call.id,
+                              type: "function" as const,
+                              function: {
+                                  name: call.name,
+                                  arguments: JSON.stringify(call.arguments ?? {}),
+                              },
+                          })),
+                      }
+                    : {}),
+            });
+            await conversations.completeRequest(canonical.requestId, "completed");
+            const responseBody = {
+                id,
+                object: "chat.completion",
+                created,
+                model: request.model,
+                choices: [
+                    {
+                        index: 0,
+                        message: {
+                            role: "assistant",
+                            content: result.content || null,
+                            ...(result.toolCalls.length > 0
+                                ? { tool_calls: openAIToolCalls(result.toolCalls) }
+                                : {}),
+                        },
+                        finish_reason: result.finishReason,
                     },
-                    finish_reason: result.finishReason,
+                ],
+                usage: openAIUsage(result.usage),
+                copilot_usage: {
+                    total_nano_aiu: result.usage.totalNanoAiu,
+                    ai_credits: result.usage.aiCredits,
+                    premium_request_cost: result.usage.premiumRequestCost,
+                    cache_read_tokens: result.usage.cachedTokens,
+                    cache_write_tokens: result.usage.cacheWriteTokens,
+                    actual_model: result.actualModel,
                 },
-            ],
-            usage: openAIUsage(result.usage),
-            copilot_usage: {
-                total_nano_aiu: result.usage.totalNanoAiu,
-                ai_credits: result.usage.aiCredits,
-                premium_request_cost: result.usage.premiumRequestCost,
-                cache_read_tokens: result.usage.cachedTokens,
-                cache_write_tokens: result.usage.cacheWriteTokens,
-                actual_model: result.actualModel,
-            },
-        });
+            };
+            json(res, 200, responseBody);
+            await recordRequest(canonical.source, req, inputBody, res.getHeaders(), responseBody);
+        } catch (error) {
+            await conversations.completeRequest(
+                canonical.requestId,
+                controller.signal.aborted ? "interrupted" : "failed",
+            );
+            throw error;
+        }
         return;
     }
 
@@ -149,6 +289,7 @@ async function handleChat(req: IncomingMessage, res: ServerResponse): Promise<vo
 
     let sentRole = false;
     let toolIndex = 0;
+    const output: string[] = [];
     const ensureRole = () => {
         if (sentRole) return;
         sentRole = true;
@@ -158,7 +299,7 @@ async function handleChat(req: IncomingMessage, res: ServerResponse): Promise<vo
             created,
             model: request.model,
             choices: [{ index: 0, delta: { role: "assistant" }, finish_reason: null }],
-        });
+        }, output);
     };
 
     try {
@@ -173,7 +314,7 @@ async function handleChat(req: IncomingMessage, res: ServerResponse): Promise<vo
                         created,
                         model: request.model,
                         choices: [{ index: 0, delta: { content: text }, finish_reason: null }],
-                    });
+                    }, output);
                 },
                 onToolCall: (call) => {
                     ensureRole();
@@ -201,11 +342,29 @@ async function handleChat(req: IncomingMessage, res: ServerResponse): Promise<vo
                                 finish_reason: null,
                             },
                         ],
-                    });
+                    }, output);
                 },
             },
             controller.signal,
         );
+
+        await conversations.appendAssistant(canonical.conversationId, {
+            role: "assistant",
+            content: result.content || null,
+            ...(result.toolCalls.length > 0
+                ? {
+                      tool_calls: result.toolCalls.map((call) => ({
+                          id: call.id,
+                          type: "function" as const,
+                          function: {
+                              name: call.name,
+                              arguments: JSON.stringify(call.arguments ?? {}),
+                          },
+                      })),
+                  }
+                : {}),
+        });
+        await conversations.completeRequest(canonical.requestId, "completed");
 
         ensureRole();
         sse(res, {
@@ -220,7 +379,7 @@ async function handleChat(req: IncomingMessage, res: ServerResponse): Promise<vo
                     finish_reason: result.finishReason,
                 },
             ],
-        });
+        }, output);
 
         if (request.stream_options?.include_usage) {
             sse(res, {
@@ -238,16 +397,24 @@ async function handleChat(req: IncomingMessage, res: ServerResponse): Promise<vo
                     cache_write_tokens: result.usage.cacheWriteTokens,
                     actual_model: result.actualModel,
                 },
-            });
+            }, output);
         }
+        output.push("data: [DONE]\n\n");
         res.write("data: [DONE]\n\n");
         res.end();
+        await recordRequest(canonical.source, req, inputBody, res.getHeaders(), output);
     } catch (error) {
+        await conversations.completeRequest(
+            canonical.requestId,
+            controller.signal.aborted ? "interrupted" : "failed",
+        );
         if (!res.writableEnded) {
-            sse(res, openAIError(error instanceof Error ? error.message : String(error), "server_error"));
+            sse(res, openAIError(error instanceof Error ? error.message : String(error), "server_error"), output);
+            output.push("data: [DONE]\n\n");
             res.write("data: [DONE]\n\n");
             res.end();
         }
+        await recordRequest(canonical.source, req, inputBody, res.getHeaders(), output);
     }
 }
 
@@ -283,7 +450,17 @@ export async function startServer(): Promise<http.Server> {
 
             json(res, 404, openAIError("Not found", "invalid_request_error", "not_found"));
         } catch (error) {
-            const status = error instanceof BadRequestError ? 400 : 500;
+            await proxyLogger.log("error", "request failed", {
+                method: req.method,
+                url: req.url,
+                error: error instanceof Error ? error.message : String(error),
+            });
+            const status =
+                error instanceof IdentifierConflictError || error instanceof ConversationConflictError
+                    ? error.statusCode
+                    : error instanceof BadRequestError
+                      ? 400
+                      : 500;
             const message = error instanceof Error ? error.message : String(error);
             json(res, status, openAIError(message, status === 400 ? "invalid_request_error" : "server_error"));
         }

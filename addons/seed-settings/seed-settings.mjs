@@ -20,7 +20,7 @@
  *     are transferred into settings.yaml while staying comments.
  * - Applied only while the per-provider flag does not exist yet. Each flag
  *   lives in $DSH_HOME/.settings-seed-complete.d/ and is named after the
- *   provider's apiKeyEnv value (for example LLAMA_API_KEY), falling back to
+ *   provider's apiKeyEnv value (for example LLM_PROXY_API_KEY), falling back to
  *   {adapter}_{provider} when the seed provider has no apiKeyEnv. The flag
  *   gates that provider's one-time fields: displayName, apiKeyEnv, api,
  *   baseURL, defaultContextWindow and streamIdleTimeoutMs. Once the flag
@@ -289,7 +289,7 @@ function assertFlagNameSafe(adapter, provider) {
 /**
  * Flag file name gating one adapter/provider pair's one-time seed fields.
  * The name follows the provider's credential environment variable (its
- * apiKeyEnv value, for example LLAMA_API_KEY); providers without a usable
+ * apiKeyEnv value, for example LLM_PROXY_API_KEY); providers without a usable
  * apiKeyEnv fall back to {adapter}_{provider}.
  * @param {string} adapter - adapter (settings namespace) name.
  * @param {string} provider - provider name.
@@ -688,13 +688,13 @@ Modes:
   --list-adapters    print the seed's adapter names, one per line
   --list-providers   print the adapter's provider names, one per line
   --reset-api-key    remove the provider's flag file (named after its
-                     apiKeyEnv, e.g. LLAMA_API_KEY) so the next start
+                     apiKeyEnv, e.g. LLM_PROXY_API_KEY) so the next start
                      re-applies its seeded settings (including the API
                      key wiring to the environment)
 
 Options:
   --adapter NAME     adapter (settings namespace) name, e.g. llm-pi-ai
-  --provider NAME    provider name, e.g. llama
+  --provider NAME    provider name, e.g. llm_proxy
 
 Environment overrides:
   SETTINGS_SEED_FILE         seed document (default /opt/dsh-seed/settings.seed.yaml)

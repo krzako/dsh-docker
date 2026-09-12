@@ -1,0 +1,19 @@
+{
+  "name": "opencode-proxy-project",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Standalone proxy that records only failed LLM requests",
+  "scripts": {
+    "start": "node proxy.mjs",
+	"fixplan": "node proxy.mjs --fix-plan",
+    "help": "node proxy.mjs --help"
+  },
+  "engines": {
+    "node": ">=22.5"
+  },
+  "license": "MIT",
+  "volta": {
+    "node": "22.23.2"
+  }
+}

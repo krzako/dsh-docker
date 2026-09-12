@@ -1,47 +1,4 @@
-include:
-  - path:
-      - ./dsh-git/docker-compose.yml
-      - ./docker-compose.dsh-git.override.yml
-
 services:
-  deepseek-harness:
-    build:
-      context: .
-      additional_contexts:
-        dsh_source: "${DSH_SOURCE:-./deepseek-harness}"
-        dsh_docker_git_source: "${DSH_DOCKER_GIT_SOURCE:-./.git/modules/deepseek-harness}"
-
-    image: ${DSH_IMAGE:-deepseek-harness:latest}
-    container_name: dsh
-    
-    environment:
-      DSH_PUBLIC_WEB_URL: "http://localhost:3080"
-      # Provider API keys, sourced from the host .env file. Each name matches
-      # the provider's apiKeyEnv entry in settings.seed.yaml (provider name in
-      # upper case + _API_KEY). An empty value means the key is not provided.
-      LLM_PROXY_API_KEY: "${LLM_PROXY_API_KEY:-}"
-      COPILOT_PROXY_API_KEY: "${COPILOT_PROXY_API_KEY:-}"
-
-    ports:
-      # deepseek-harness port
-      - "127.0.0.1:3080:3080"
-      # Ports for agents applications
-      - "127.0.0.1:3310-3330:3310-3330"
-
-    volumes:
-      - "./volumes/workspaces:/home/node"
-      - "dsh-home:/home/node/.dsh"
-      # Settings seed for the startup merge; mounted read-only so host edits
-      # apply without rebuilding the image.
-      - "./settings.seed.yaml:/opt/dsh-seed/settings.seed.yaml:ro"
-
-    networks:
-      - default
-      - dsh_git
-
-    stdin_open: true
-    tty: true
-    
   open-webui:
     image: ghcr.io/open-webui/open-webui:main
     container_name: open-webui
@@ -53,7 +10,7 @@ services:
       WEBUI_AUTH: "true"
       HF_HUB_OFFLINE: "1"
 
-      OPENAI_API_BASE_URL: "http://llm-proxy:${LLM_PROXY_PORT:-9090}/v1"
+      OPENAI_API_BASE_URL: "http://llm-proxy:${LLM_PROXY_PORT:-8787}/v1"
       OPENAI_API_KEY: "${LLM_PROXY_API_KEY}"
 
       ENABLE_WEB_SEARCH: "true"
@@ -74,13 +31,12 @@ services:
     ports:
       - "127.0.0.1:${LLM_PROXY_PORT:-9090}:9090"
     environment:
-      LLM_PROXY_UPSTREAM: "${LLM_PROXY_UPSTREAM}"
       LLM_PROXY_HOST: "0.0.0.0"
     volumes:
       - ./volumes/llm-proxy:/app/requests
 
   copilot-proxy:
-    build: ./copilot-proxy
+    build: ./copilot-openai-api-proxy
     image: copilot-proxy:latest
     container_name: copilot-proxy
     restart: unless-stopped
@@ -115,5 +71,4 @@ services:
       - ./volumes/open-terminal:/home/user
 
 volumes:
-  dsh-home:
   copilot-proxy-data:

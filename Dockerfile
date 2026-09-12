@@ -5,7 +5,7 @@
 # =============================================================================
 
 FROM traefik:v2.4 AS traefik_source
-FROM minio/minio:RELEASE.2025-02-03T21-03-04Z AS minio_source
+FROM quay.io/minio/minio:RELEASE.2025-02-03T21-03-04Z AS minio_source
 
 
 # =============================================================================
@@ -281,20 +281,6 @@ RUN corepack enable \
 
 
 # -----------------------------------------------------------------------------
-# OpenAI proxy
-#
-# The `llama-proxy` directory must be present in the main Docker build context.
-# Dependencies are installed at image-build time.
-# -----------------------------------------------------------------------------
-
-COPY --chown=node:node llama-proxy/ /llama-proxy/
-
-RUN cd /llama-proxy \
-    && npm install \
-    && chown -R node:node /llama-proxy
-
-
-# -----------------------------------------------------------------------------
 # DSH runtime
 # -----------------------------------------------------------------------------
 
@@ -319,35 +305,8 @@ RUN chmod 0555 /usr/local/bin/dsh-entrypoint
 # Settings seed: merged into $DSH_HOME/settings.yaml at every container start.
 COPY --chown=node:node settings.seed.yaml /opt/dsh-seed/settings.seed.yaml
 COPY --chown=node:node addons/seed-settings/seed-settings.mjs /opt/dsh-seed/seed-settings.mjs
-
-# Build-time self-test of the settings seed merge logic. The test resolves its
-# seed document at ../../settings.seed.yaml, so mirror that layout in a
-# temporary directory and drop it after the run. The harness checkout copied
-# above provides the yaml package the merge script loads.
-COPY --chown=node:node addons/seed-settings /opt/dsh-seed-selftest/addons/seed-settings
-COPY --chown=node:node settings.seed.yaml /opt/dsh-seed-selftest/settings.seed.yaml
-RUN cd /opt/dsh-seed-selftest/addons/seed-settings \
-    && node --test seed-settings.test.mjs \
-    && rm -rf /opt/dsh-seed-selftest
-
-# Start llama-proxy in the background before handing control to the original
-# DSH entrypoint. Logs and the background PID are kept in the DSH home.
-RUN cat > /usr/local/bin/dsh-entrypoint-with-proxy <<'EOF'
-#!/bin/sh
-set -eu
-
-PROXY_LOG="${OPENAI_PROXY_LOG:-/llama-proxy/llama-proxy.log}"
-PROXY_PID_FILE="${OPENAI_PROXY_PID_FILE:-/llama-proxy/llama-proxy.pid}"
-
-mkdir -p "$(dirname "${PROXY_LOG}")" "$(dirname "${PROXY_PID_FILE}")"
-
-nohup node /llama-proxy/server.js >>"${PROXY_LOG}" 2>&1 &
-echo "$!" > "${PROXY_PID_FILE}"
-
-exec /usr/local/bin/dsh-entrypoint "$@"
-EOF
-
-RUN chmod 0555 /usr/local/bin/dsh-entrypoint-with-proxy
+COPY --chown=node:node addons/seed-settings/seed-settings.test.mjs /opt/dsh-seed/seed-settings.test.mjs
+RUN cd /opt/dsh-seed && node --test seed-settings.test.mjs
 
 # Build-time sanity checks for the bundled toolchain/services.
 RUN node --version \
@@ -363,10 +322,8 @@ RUN node --version \
     && traefik version \
     && minio --version \
     && mc --version \
-    && test -f /llama-proxy/server.js \
     && node --check /opt/dsh-seed/seed-settings.mjs \
-    && test -f /opt/dsh-seed/settings.seed.yaml \
-    && test -x /usr/local/bin/dsh-entrypoint-with-proxy
+    && test -f /opt/dsh-seed/settings.seed.yaml
 
 USER root
 
@@ -420,8 +377,6 @@ ENV DSH_PDF_CHROME_NO_SANDBOX=1
 USER node
 WORKDIR /home/node
 
-# llama-proxy is started automatically in the background immediately before DSH.
-# PostgreSQL, RabbitMQ, Redis, Traefik and MinIO remain opt-in services/tools.
 EXPOSE 3080
 
-ENTRYPOINT ["/usr/local/bin/dsh-entrypoint-with-proxy"]
+ENTRYPOINT ["/usr/local/bin/dsh-entrypoint"]

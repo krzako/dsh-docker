@@ -71,6 +71,13 @@ export type ChatCompletionRequest = {
     n?: number;
     stop?: string | string[];
     user?: string;
+    metadata?: Record<string, unknown>;
+    conversation_id?: string;
+    session_id?: string;
+    thread_id?: string;
+    chat_id?: string;
+    message_id?: string;
+    run_id?: string;
 };
 
 export type ProxyToolCall = {

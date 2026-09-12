@@ -1,7 +1,5 @@
-import os from "node:os";
-import path from "node:path";
-
 export type CopilotLogLevel = "none" | "error" | "warning" | "info" | "debug" | "all";
+export type ProxyLogLevel = CopilotLogLevel;
 
 function intEnv(name: string, fallback: number): number {
     const raw = process.env[name];
@@ -14,21 +12,38 @@ function intEnv(name: string, fallback: number): number {
 }
 
 function logLevelEnv(): CopilotLogLevel {
-    const value = (process.env.COPILOT_LOG_LEVEL ?? "warning") as CopilotLogLevel;
+    const value = (process.env.COPILOT_PROXY_COPILOT_SDK_LOG_LEVEL ?? "error") as CopilotLogLevel;
     const allowed = new Set<CopilotLogLevel>(["none", "error", "warning", "info", "debug", "all"]);
-    if (!allowed.has(value)) throw new Error(`Invalid COPILOT_LOG_LEVEL: ${value}`);
+    if (!allowed.has(value)) throw new Error(`Invalid COPILOT_PROXY_COPILOT_SDK_LOG_LEVEL: ${value}`);
     return value;
 }
 
-const defaultCopilotHome = path.join(os.homedir(), ".copilot");
+function proxyLogLevelEnv(): ProxyLogLevel {
+    const value = (process.env.COPILOT_PROXY_LOG_LEVEL ?? "info") as ProxyLogLevel;
+    const allowed = new Set<ProxyLogLevel>(["none", "error", "warning", "info", "debug", "all"]);
+    if (!allowed.has(value)) throw new Error(`Invalid COPILOT_PROXY_LOG_LEVEL: ${value}`);
+    return value;
+}
+
+function boolEnv(name: string, fallback: boolean): boolean {
+    const value = process.env[name];
+    if (value === undefined) return fallback;
+    if (value === "true" || value === "1" || value === "yes") return true;
+    if (value === "false" || value === "0" || value === "no") return false;
+    throw new Error(`${name} must be true or false`);
+}
 
 export const config = {
-    host: process.env.HOST ?? "127.0.0.1",
-    port: intEnv("PORT", 9999),
-    apiKey: process.env.PROXY_API_KEY || undefined,
-    githubToken: process.env.COPILOT_GITHUB_TOKEN || process.env.GITHUB_TOKEN || undefined,
-    copilotRuntimeUrl: process.env.COPILOT_RUNTIME_URL || undefined,
-    copilotHome: path.resolve(process.env.COPILOT_HOME || defaultCopilotHome),
-    copilotLogLevel: logLevelEnv(),
-    maxBodyBytes: intEnv("MAX_BODY_BYTES", 16 * 1024 * 1024),
+    host: process.env.COPILOT_PROXY_HOST ?? "127.0.0.1",
+    port: intEnv("COPILOT_PROXY_PORT", 9091),
+    apiKey: process.env.COPILOT_PROXY_API_KEY || undefined,
+    copilotRuntimeUrl: "127.0.0.1:4321",
+    copilotHome: "/home/node/.copilot",
+    conversationStorePath:
+        process.env.COPILOT_PROXY_CONVERSATION_STORE ?? "/home/node/.copilot/proxy-conversations.json",
+    maxContextMessages: intEnv("COPILOT_PROXY_MAX_CONTEXT_MESSAGES", 2000),
+    copilotSdkLogLevel: logLevelEnv(),
+    proxyLogLevel: proxyLogLevelEnv(),
+    proxyLogRequests: boolEnv("COPILOT_PROXY_LOG_REQUESTS", true),
+    proxyLogDir: "/app/logs/copilot-proxy",
 };
