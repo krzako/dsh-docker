@@ -41,28 +41,95 @@ llm-pi-ai:
             medium: "medium"
             xhigh: "xhigh"
 
-    copilot-proxy:
+    copilot_proxy:
       defaultInput: [text, image]
       apiKeyEnv: COPILOT_PROXY_API_KEY
       apiKeyEnvRequired: true
       api: openai-completions
-      baseURL: http://copilot_proxy:10091/v1
+      baseURL: http://copilot-proxy:10091/v1
       models:
         - id: auto
         - id: claude-opus-4.7
+          reasoningEfforts:
+            off:
+            low: low
+            medium: medium
+            high: high
+            xhigh: xhigh
+            max: max
         - id: claude-sonnet-4.6
+          reasoningEfforts:
+            off:
+            low: low
+            medium: medium
+            high: high
+            max: max
         - id: claude-opus-4.6
+          reasoningEfforts:
+            off:
+            low: low
+            medium: medium
+            high: high
+            max: max
         - id: claude-sonnet-4.5
         - id: claude-opus-4.5
         - id: claude-haiku-4.5
         - id: gpt-5.6-sol
+          reasoningEfforts:
+            off: none
+            low: low
+            medium: medium
+            high: high
+            xhigh: xhigh
+            max: max
         - id: gpt-5.6-terra
+          reasoningEfforts:
+            off: none
+            low: low
+            medium: medium
+            high: high
+            xhigh: xhigh
+            max: max
         - id: gpt-5.6-luna
+          reasoningEfforts:
+            off: none
+            low: low
+            medium: medium
+            high: high
+            xhigh: xhigh
+            max: max
         - id: gpt-5.5
+          reasoningEfforts:
+            off: none
+            low: low
+            medium: medium
+            high: high
+            xhigh: xhigh
         - id: gpt-5.4
+          reasoningEfforts:
+            off: none
+            low: low
+            medium: medium
+            high: high
+            xhigh: xhigh
         - id: gpt-5.4-mini
+          reasoningEfforts:
+            off: none
+            low: low
+            medium: medium
+            high: high
+            xhigh: xhigh
         - id: gpt-5.3-codex
+          reasoningEfforts:
+            low: low
+            medium: medium
+            high: high
+            xhigh: xhigh
         - id: gpt-5-mini
+          reasoningEfforts:
+            low: low
+            medium: medium
+            high: high
         - id: gemini-3.5-flash
         - id: gemini-3.1-pro-preview
 

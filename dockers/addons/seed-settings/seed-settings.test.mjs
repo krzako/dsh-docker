@@ -270,11 +270,12 @@ describe('runs after the flag exists', () => {
   })
 
   it('appends missing seed models and never touches existing ones', async () => {
-    let text = await readSettings()
     // Add a custom option to an existing seed model and drop a seed model.
-    text = text.replace('        - id: auto\n', '        - id: auto\n          renamed: true\n')
-    text = text.replace('        - id: gpt-5.6-terra\n', '')
-    await writeSettings(text)
+    const seeded = yaml.parse(await readSettings())
+    const copilotModels = seeded['llm-pi-ai'].providers.copilot_proxy.models
+    copilotModels.find((m) => m.id === 'auto').renamed = true
+    seeded['llm-pi-ai'].providers.copilot_proxy.models = copilotModels.filter((m) => m.id !== 'gpt-5.6-terra')
+    await writeSettings(yaml.stringify(seeded))
 
     const result = await runSeed({ env: COPILOT_KEY })
     assert.equal(result.changed, true)
@@ -282,7 +283,10 @@ describe('runs after the flag exists', () => {
     const settings = yaml.parse(await readSettings())
     const copilotProxyModels = settings['llm-pi-ai'].providers.copilot_proxy.models
     assert.equal(copilotProxyModels.find((m) => m.id === 'auto').renamed, true)
-    assert.ok(copilotProxyModels.some((m) => m.id === 'gpt-5.6-terra'))
+    assert.deepEqual(
+      copilotProxyModels.find((m) => m.id === 'gpt-5.6-terra'),
+      SEED['llm-pi-ai'].providers.copilot_proxy.models.find((m) => m.id === 'gpt-5.6-terra'),
+    )
   })
 
   it('re-adds a provider the user deleted, whole from the seed', async () => {
