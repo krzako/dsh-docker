@@ -8,9 +8,9 @@
  * - Enforced on EVERY start, with or without the completion flags:
  *   - a provider missing from an adapter's providers map is added whole from
  *     the seed,
- *   - a seed provider's defaultInput always overwrites the stored value,
- *   - seed models missing from a provider's models list are appended
- *     (matched by models[].id; existing entries are never modified),
+ *   - a provider models list that is absent, empty, or null is set from the
+ *     seed wholesale, and seed models missing from a stored list are
+ *     appended (matched by models[].id; existing entries are never modified),
  *   - a seed provider's compat replaces the stored compat wholesale.
  * - Applied only while the global completion flag (.settings-seed-complete)
  *   does not exist yet (first seed):
@@ -28,6 +28,20 @@
  *   removing the flag (reset_api_key.sh) makes the next start re-apply the
  *   seeded values, including the API key wiring to the environment variable
  *   passed through docker-compose from the host .env file.
+ * - A provider marked `apiKeyEnvRequired: true` (seed metadata, never copied
+ *   into settings.yaml) is skipped entirely while its apiKeyEnv variable is
+ *   unset or empty: no fields, no models, no flag. Nothing already stored is
+ *   ever removed; when the variable later holds a value, the provider seeds
+ *   like any other.
+ * - A provider marked `apiKeyEnvRequired: true` whose flag is absent has its
+ *   credential reference written into the credentials document
+ *   ($DSH_HOME/.credentials.yaml): refs.<apiKeyEnv> = the environment value.
+ *   The write runs after the settings document was saved and before the
+ *   flags; removing the provider flag makes the next start re-write the
+ *   reference from the environment. The document is validated against the
+ *   credentials-local layout (version 1, refs/records keys, non-empty string
+ *   references) and an unparsable or foreign document fails the run before
+ *   anything is written.
  * - Providers, models, and sections the seed does not mention are never
  *   removed or overwritten (outside the rules above).
  * - The flags are created only after the merge was fully applied and the
@@ -79,6 +93,16 @@ const FIRST_SEED_GLOBAL_SECTIONS = [
 export const FLAG_NAME = '.settings-seed-complete'
 /** Directory under the settings home holding one flag file per provider. */
 export const PROVIDER_FLAG_DIR_NAME = '.settings-seed-complete.d'
+/**
+ * Seed-provider field marking a provider that is only seeded while its
+ * apiKeyEnv variable holds a non-empty value. Seed metadata only: every path
+ * that copies seed content into settings.yaml strips it.
+ */
+const ENV_GATED_FIELD = 'apiKeyEnvRequired'
+/** Basename of the credentials document inside the settings home. */
+const CREDENTIALS_FILE_NAME = '.credentials.yaml'
+/** Credentials layout version this script writes; mirrors credentials-local. */
+const CREDENTIALS_DOCUMENT_VERSION = 1
 
 const moduleRequire = createRequire(import.meta.url)
 
@@ -268,11 +292,6 @@ async function readOptional(filePath, label) {
   }
 }
 
-/** Strip CRs and keep exactly one trailing newline. */
-function normalizeTrailingNewline(text) {
-  return `${text.replace(/\r\n/g, '\n').replace(/\n+$/, '')}\n`
-}
-
 /**
  * Reject adapter/provider names that cannot form a safe flag file name.
  * @param {string} adapter - adapter (settings namespace) name.
@@ -329,19 +348,61 @@ export function findAdapterSections(seedRoot) {
 }
 
 /**
+ * Read a seed provider's key value from the environment: the non-empty value
+ * of its apiKeyEnv variable, or undefined when the variable is unset, empty,
+ * or unusable as a flag file name.
+ * @param {Record<string, unknown> | undefined} seedProvider - the seed provider map.
+ * @param {NodeJS.ProcessEnv} env - environment variables.
+ * @returns {string | undefined} the environment key value.
+ */
+function providerApiKeyEnvValue(seedProvider, env) {
+  if (!isPlainObject(seedProvider)) return undefined
+  const name = seedProvider.apiKeyEnv
+  if (typeof name !== 'string' || name.length === 0 || /[\/]/.test(name) || name.includes('\0')) return undefined
+  const value = env[name]
+  return typeof value === 'string' && value.length > 0 ? value : undefined
+}
+
+/**
+ * Whether a seed provider is marked apiKeyEnvRequired and its key variable is
+ * empty or unset, so the merge must skip the provider entirely.
+ * @param {Record<string, unknown> | undefined} seedProvider - the seed provider map.
+ * @param {NodeJS.ProcessEnv} env - environment variables.
+ * @returns {boolean} whether the provider stays out of this pass.
+ */
+function isEnvGatedOff(seedProvider, env) {
+  return isPlainObject(seedProvider)
+    && seedProvider[ENV_GATED_FIELD] === true
+    && providerApiKeyEnvValue(seedProvider, env) === undefined
+}
+
+/**
+ * Remove seed metadata fields from a cloned provider map node so they never
+ * reach settings.yaml.
+ * @param {import('yaml').CST.Node} providerNode - cloned provider map node (mutated).
+ */
+function stripSeedMetadata(providerNode) {
+  if (!isMapNode(providerNode)) return
+  const index = providerNode.items.findIndex(isPairWithKey(ENV_GATED_FIELD))
+  if (index >= 0) providerNode.items.splice(index, 1)
+}
+
+/**
  * Apply the merge rules to an existing, parsed settings document. The
  * document is mutated in place through the comment-preserving CST; seed
  * content is inserted as cloned nodes so seed comments travel with it.
  * @param {import('yaml').Document} document - parsed settings document (mutated).
  * @param {import('yaml').Document} seedDocument - parsed seed document.
- * @param {Record<string, unknown>} settingsRoot - pre-merge JS value of the settings document.
+ * @param {Record<string, unknown>} settingsRoot - JS value of the settings document at entry; refreshed after inserts that make it stale.
  * @param {Record<string, unknown>} seedRoot - JS value of the seed document.
  * @param {boolean} globalFirstSeed - whether the global completion flag is still absent.
  * @param {(adapter: string, provider: string, seedProvider: Record<string, unknown>) => boolean} isProviderFirstSeed - whether the provider's one-time fields may be applied.
+ * @param {{adapter: string, provider: string, apiKeyEnv: string, value: string}[]} credentialsPending - sink collecting credential reference writes decided during the pass.
+ * @param {NodeJS.ProcessEnv} env - environment variables, read for apiKeyEnv-gated providers.
  * @param {string[]} ops - change log sink; one entry per applied change.
  * @param {(message: string) => void} log - progress sink for non-change notes.
  */
-function applyMerge(document, seedDocument, settingsRoot, seedRoot, globalFirstSeed, isProviderFirstSeed, ops, log) {
+function applyMerge(document, seedDocument, settingsRoot, seedRoot, globalFirstSeed, isProviderFirstSeed, credentialsPending, env, ops, log) {
   const adapterSections = findAdapterSections(seedRoot)
   if (adapterSections.length === 0) {
     throw new Error('settings-seed: the seed has no adapter sections with a providers map; nothing to merge')
@@ -349,7 +410,19 @@ function applyMerge(document, seedDocument, settingsRoot, seedRoot, globalFirstS
 
   for (const [adapterName, seedSection] of adapterSections) {
     const providersPath = [adapterName, 'providers']
-    const seedProviders = seedSection.providers
+    const seedProvidersNode = seedDocument.getIn(providersPath, true)
+
+    // Providers marked apiKeyEnvRequired stay out of the merge entirely
+    // while their key variable is empty or unset.
+    const active = []
+    for (const [name, seedProvider] of Object.entries(seedSection.providers)) {
+      if (isEnvGatedOff(seedProvider, env)) {
+        log(`provider ${adapterName}/${name}: skipped while ${seedProvider.apiKeyEnv} is not set`)
+        continue
+      }
+      active.push([name, seedProvider, seedProvidersNode.items.find(isPairWithKey(name))])
+    }
+    if (active.length === 0) continue
 
     // Ensure the provider directory exists before touching providers.
     let providersNode = document.getIn(providersPath, true)
@@ -357,22 +430,39 @@ function applyMerge(document, seedDocument, settingsRoot, seedRoot, globalFirstS
       throw new Error(`settings-seed: ${adapterName}.providers exists in settings.yaml but is not a map`)
     }
     if (providersNode === undefined) {
-      document.setIn(providersPath, seedDocument.getIn(providersPath, true).clone())
+      // Clone only the active providers; seed metadata never travels along.
+      const activeNames = new Set(active.map(([name]) => name))
+      const wholesale = seedProvidersNode.clone()
+      wholesale.items = wholesale.items
+        .filter((item) => item?.constructor?.name === 'Pair' && activeNames.has(item.key?.value))
+      for (const item of wholesale.items) stripSeedMetadata(item.value)
+      document.setIn(providersPath, wholesale)
       ops.push(`${adapterName}.providers: created from seed (all providers added)`)
       providersNode = document.getIn(providersPath, true)
+      // The wholesale insert made the entry-time JS value stale.
+      settingsRoot = document.toJS() ?? {}
     }
-    const seedProvidersNode = seedDocument.getIn(providersPath, true)
 
-    for (const [name, seedProvider] of Object.entries(seedProviders)) {
+    for (const [name, seedProvider, seedProviderPair] of active) {
       // Register the provider's flag status up front so a provider added
       // whole from the seed also gets its flag created.
       const providerFirstSeed = isProviderFirstSeed(adapterName, name, seedProvider)
+      const apiKeyEnvValue = providerApiKeyEnvValue(seedProvider, env)
+      if (providerFirstSeed && apiKeyEnvValue !== undefined) {
+        credentialsPending.push({
+          adapter: adapterName,
+          provider: name,
+          apiKeyEnv: /** @type {string} */ (seedProvider.apiKeyEnv),
+          value: apiKeyEnvValue,
+        })
+      }
       const providerPath = [adapterName, 'providers', name]
-      const seedProviderPair = seedProvidersNode.items.find(isPairWithKey(name))
       const existingPair = providersNode.items.find(isPairWithKey(name))
 
       if (existingPair === undefined) {
-        providersNode.items.push(seedProviderPair.clone())
+        const added = seedProviderPair.clone()
+        stripSeedMetadata(added.value)
+        providersNode.items.push(added)
         ops.push(`provider ${adapterName}/${name}: added from seed`)
         continue
       }
@@ -406,11 +496,13 @@ function applyMerge(document, seedDocument, settingsRoot, seedRoot, globalFirstS
         ops.push(`provider ${adapterName}/${name}.${field}: forced from seed`)
       }
 
-      // models: append every seed model whose id is missing; never touch or
-      // reorder stored models.
+      // models: an absent, empty, or null models list is set from the seed
+      // wholesale; otherwise every seed model whose id is missing is
+      // appended, and stored models are never touched or reordered.
       if (Array.isArray(seedProvider.models)) {
         const storedModels = existing.models
-        if (storedModels === undefined) {
+        if (storedModels === undefined || storedModels === null
+          || (Array.isArray(storedModels) && storedModels.length === 0)) {
           document.setIn([...providerPath, 'models'], seedValueNode('models').clone())
           ops.push(`provider ${adapterName}/${name}.models: set from seed`)
         } else if (!Array.isArray(storedModels)) {
@@ -471,9 +563,82 @@ function applyMerge(document, seedDocument, settingsRoot, seedRoot, globalFirstS
 }
 
 /**
+ * Parse the credentials document a pending reference write will edit and
+ * validate it against the credentials-local layout (version 1, refs/records
+ * keys, non-empty string references) so an unusable document fails the run
+ * before anything is written. An absent or empty document starts a fresh one.
+ * @param {typeof import('yaml')} yaml - yaml namespace.
+ * @param {string} credentialsPath - credentials document path.
+ * @returns {Promise<import('yaml').Document>} the parsed or freshly created document.
+ */
+async function prepareCredentialsDocument(yaml, credentialsPath) {
+  const text = await readOptional(credentialsPath, 'credentials document')
+  if (text === undefined || text.trim().length === 0) {
+    // A fresh version-1 document; the refs map is added block-style by the
+    // reference writes below.
+    return parseDocument(yaml, 'version: 1\n', 'fresh credentials document')
+  }
+  const document = parseDocument(yaml, text, 'credentials document')
+  const root = document.toJS() ?? {}
+  if (!isPlainObject(root)) {
+    throw new Error(`settings-seed: credentials document ${credentialsPath} must be a map`)
+  }
+  const keys = Object.keys(root)
+  if (keys.length === 0) return document
+  if (!('version' in root)) {
+    throw new Error(`settings-seed: credentials document ${credentialsPath} lacks "version: 1"; refusing to edit it`)
+  }
+  if (root.version !== CREDENTIALS_DOCUMENT_VERSION) {
+    throw new Error(`settings-seed: credentials document ${credentialsPath} declares unsupported version ${JSON.stringify(root.version)}`)
+  }
+  for (const key of keys) {
+    if (key !== 'version' && key !== 'refs' && key !== 'records') {
+      throw new Error(`settings-seed: credentials document ${credentialsPath} has unknown top-level key "${key}"`)
+    }
+  }
+  if (root.refs !== undefined && root.refs !== null && !isPlainObject(root.refs)) {
+    throw new Error(`settings-seed: credentials document ${credentialsPath} has a non-map "refs" section`)
+  }
+  for (const [key, value] of Object.entries(root.refs ?? {})) {
+    if (typeof value !== 'string' || value.length === 0) {
+      throw new Error(`settings-seed: credentials document ${credentialsPath} has an unusable "${key}" reference`)
+    }
+  }
+  return document
+}
+
+/**
+ * Write the pending credential references into the prepared credentials
+ * document and persist it atomically with owner-only permissions. Runs after
+ * the settings document was saved and before any flag is created, so a failed
+ * write leaves every flag absent and the next start retries the whole pass.
+ * @param {{
+ *   credentialsPending: {adapter: string, provider: string, apiKeyEnv: string, value: string}[],
+ *   credentialsDocument: import('yaml').Document | undefined,
+ *   credentialsPath: string,
+ *   log: (message: string) => void,
+ * }} state - merge outcome.
+ */
+async function writeCredentials(state) {
+  const { credentialsPending, credentialsDocument, credentialsPath, log } = state
+  if (credentialsPending.length === 0) return
+  let changed = false
+  for (const entry of credentialsPending) {
+    if (credentialsDocument.getIn(['refs', entry.apiKeyEnv]) === entry.value) continue
+    credentialsDocument.setIn(['refs', entry.apiKeyEnv], entry.value)
+    changed = true
+    log(`credentials ${credentialsPath}: set ${entry.apiKeyEnv} (${entry.adapter}/${entry.provider})`)
+  }
+  if (!changed) return
+  await atomicWrite(credentialsPath, credentialsDocument.toString(), 0o600)
+  log(`saved ${credentialsPath}`)
+}
+
+/**
  * Persist the merge result and create the completion flags. Flags are only
- * ever created after the document write succeeded, so a failed run leaves
- * every flag absent and the next start retries the full seed.
+ * ever created after the document and credentials writes succeeded, so a
+ * failed run leaves every flag absent and the next start retries the full
+ * seed.
  * @param {{
  *   firstSeed: boolean,
  *   flagPath: string,
@@ -494,6 +659,7 @@ async function finishSeed(state) {
   } else {
     log('settings document already matches the seed; nothing to change')
   }
+  await writeCredentials(state)
   let flagCreated = false
   if (firstSeed) flagCreated = await createFlag(flagPath, log)
   const providerFlagsCreated = []
@@ -510,8 +676,10 @@ async function finishSeed(state) {
  *   settingsPath: string,
  *   flagPath: string,
  *   apiFlagDir?: string,
+ *   credentialsPath?: string,
  *   seedText?: string,
  *   settingsText?: string,
+ *   env?: NodeJS.ProcessEnv,
  *   log?: (message: string) => void,
  * }} options - paths, optional text overrides for tests, and a progress sink.
  * @returns {Promise<{changed: boolean, wroteSettings: boolean, ops: string[], firstSeed: boolean, flagCreated: boolean, providerFlagsCreated: string[]}>} what the pass did.
@@ -519,7 +687,11 @@ async function finishSeed(state) {
 export async function seedSettings(options) {
   const { seedPath, settingsPath, flagPath, log = () => {} } = options
   const yaml = loadYaml()
+  const env = options.env ?? process.env
   const apiFlagDir = options.apiFlagDir ?? path.join(path.dirname(settingsPath), PROVIDER_FLAG_DIR_NAME)
+  const credentialsPath = options.credentialsPath
+    ?? env.SETTINGS_SEED_CREDENTIALS_FILE
+    ?? path.join(path.dirname(settingsPath), CREDENTIALS_FILE_NAME)
 
   // 1. Read and parse the seed; an invalid seed stops everything.
   const seedText = options.seedText ?? await (async () => {
@@ -528,7 +700,6 @@ export async function seedSettings(options) {
     return text
   })()
   const { document: seedDocument, root: seedRoot } = parseSeedDocument(yaml, seedText)
-  const adapterSections = findAdapterSections(seedRoot)
 
   // 2. Read and parse the stored document; a corrupt document stops
   //    everything before any write or flag creation.
@@ -548,36 +719,43 @@ export async function seedSettings(options) {
     return false
   }
 
-  // Absent or empty document: seed it verbatim. There is no user content to
-  // protect, and the verbatim copy keeps every seed comment in place.
-  if (!hasContent) {
-    for (const [adapterName, section] of adapterSections) {
-      for (const [providerName, seedProvider] of Object.entries(section.providers)) {
-        isProviderFirstSeed(adapterName, providerName, seedProvider)
-      }
-    }
-    return finishSeed({
-      firstSeed: globalFirstSeed,
-      flagPath,
-      providerFlagsPending,
-      ops: ['seeded from settings.seed.yaml'],
-      outputText: normalizeTrailingNewline(seedText),
-      settingsPath,
-      log,
-    })
+  // 4. Apply per-provider rules and, on the first seed, global sections. An
+  //    absent or empty document behaves like an empty map: the merge then
+  //    adds every seed piece from clones, which keeps the seed comments in
+  //    place while still honoring the per-provider environment gate.
+  let document
+  let settingsRoot
+  if (hasContent) {
+    ;({ document, root: settingsRoot } = parseSettingsDocument(yaml, settingsText, `settings document ${settingsPath}`))
+  } else {
+    document = new yaml.Document({})
+    settingsRoot = {}
   }
 
-  const { document, root: settingsRoot } = parseSettingsDocument(yaml, settingsText, `settings document ${settingsPath}`)
+  // Global sections are protected by the global flag, but an absent or
+  // empty document has no user content to protect, so they are applied
+  // regardless: the re-seed of a deleted document must stay complete.
+  const globalApply = globalFirstSeed || !hasContent
 
-  // 4.+5. Apply per-provider rules and, on the first seed, global sections.
   const ops = []
-  applyMerge(document, seedDocument, settingsRoot, seedRoot, globalFirstSeed, isProviderFirstSeed, ops, log)
+  const credentialsPending = []
+  applyMerge(document, seedDocument, settingsRoot, seedRoot, globalApply, isProviderFirstSeed, credentialsPending, env, ops, log)
+
+  // 5. Parse the credentials document before anything is written: an
+  //    unparsable or foreign one fails the run loudly with no document saved
+  //    and no flag created.
+  const credentialsDocument = credentialsPending.length > 0
+    ? await prepareCredentialsDocument(yaml, credentialsPath)
+    : undefined
 
   // 6. Save; 7. only a fully successful pass creates the flags.
   return finishSeed({
     firstSeed: globalFirstSeed,
     flagPath,
     providerFlagsPending,
+    credentialsPending,
+    credentialsDocument,
+    credentialsPath,
     ops,
     outputText: ops.length > 0 ? document.toString() : undefined,
     settingsPath,
@@ -600,6 +778,7 @@ export function resolvePaths(env = process.env) {
     settingsPath,
     flagPath: env.SETTINGS_SEED_FLAG_FILE || path.join(dshHome, FLAG_NAME),
     apiFlagDir: env.SETTINGS_SEED_FLAG_DIR || path.join(path.dirname(settingsPath), PROVIDER_FLAG_DIR_NAME),
+    credentialsPath: env.SETTINGS_SEED_CREDENTIALS_FILE || path.join(path.dirname(settingsPath), CREDENTIALS_FILE_NAME),
   }
 }
 
@@ -702,6 +881,7 @@ Environment overrides:
   DSH_SETTINGS_FILE          settings document (default $DSH_HOME/settings.yaml)
   SETTINGS_SEED_FLAG_FILE    first-seed completion flag (default $DSH_HOME/.settings-seed-complete)
   SETTINGS_SEED_FLAG_DIR     per-provider flag directory (default $DSH_HOME/.settings-seed-complete.d)
+  SETTINGS_SEED_CREDENTIALS_FILE  credentials document (default $DSH_HOME/.credentials.yaml)
   SETTINGS_SEED_YAML_MODULE  explicit path of the yaml package
 `
 

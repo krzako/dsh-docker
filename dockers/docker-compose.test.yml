@@ -39,6 +39,7 @@ services:
       # the production instance).
       LLM_PROXY_API_KEY: "${LLM_PROXY_API_KEY:-}"
       COPILOT_PROXY_API_KEY: "${COPILOT_PROXY_API_KEY:-}"
+      OPENROUTER_API_KEY: "${OPENROUTER_API_KEY:-}"
 
     ports:
       # deepseek-harness web port (production 3080 + 1000)

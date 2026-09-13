@@ -15,12 +15,12 @@ llm-pi-ai:
       defaultContextWindow: 131072
       streamIdleTimeoutMs: 600000
 
-      #      retryPolicy:
-      #        mode: always
-      #        backoff:
-      #          initialDelayMs: 5000
-      #          maxDelayMs: 120000
-      #          jitterRatio: 0.2
+#      retryPolicy:
+#        mode: always
+#        backoff:
+#          initialDelayMs: 5000
+#          maxDelayMs: 120000
+#          jitterRatio: 0.2
 
       compat:
         thinkingFormat: chat-template
@@ -64,6 +64,16 @@ llm-pi-ai:
         - id: gpt-5-mini
         - id: gemini-3.5-flash
         - id: gemini-3.1-pro-preview
+
+    openrouter:
+      defaultInput: [text, image]
+      apiKeyEnv: OPENROUTER_API_KEY
+      apiKeyEnvRequired: true
+      models:
+        - id: z-ai/glm-5.3-flash
+          name: GLM 5.3 Flash
+          contextWindow: 500000
+          maxTokens: 131072
 
 agent-default-model:
   provider: llm_proxy

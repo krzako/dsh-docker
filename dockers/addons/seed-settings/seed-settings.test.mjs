@@ -27,14 +27,43 @@ const SEED_PATH = fileURLToPath(new URL('./settings.seed.yaml', import.meta.url)
 const SEED_TEXT = await fsp.readFile(SEED_PATH, 'utf8')
 const SEED = yaml.parse(SEED_TEXT)
 
+/**
+ * The seed text with one extra openrouter model, for merge tests that need a
+ * seed model a stored document cannot know yet.
+ */
+const SEED_TEXT_EXTRA_MODEL = SEED_TEXT.replace(
+  '        - id: z-ai/glm-5.3-flash\n          name: GLM 5.3 Flash\n          contextWindow: 500000\n          maxTokens: 131072',
+  '        - id: z-ai/glm-5.3-flash\n          name: GLM 5.3 Flash\n          contextWindow: 500000\n          maxTokens: 131072\n        - id: z-ai/glm-5.2\n          name: GLM 5.2',
+)
+assert.notEqual(SEED_TEXT_EXTRA_MODEL, SEED_TEXT)
+
+/**
+ * The seed document without the providers an empty environment gates off:
+ * what a seed pass stores when no gated key variable holds a value.
+ */
+function seedWithoutEnvGated() {
+  const copy = structuredClone(SEED)
+  for (const section of Object.values(copy)) {
+    if (!section || typeof section !== 'object' || !section.providers) continue
+    for (const [name, provider] of Object.entries(section.providers)) {
+      if (provider && provider.apiKeyEnvRequired === true) delete section.providers[name]
+    }
+  }
+  return copy
+}
+const SEED_NO_KEY = seedWithoutEnvGated()
+
 let home
 
 /** Run one seed pass against the fixture home. */
-function runSeed(overrides = {}) {
+function runSeed({ env = {}, ...overrides } = {}) {
   return seedSettings({
     seedPath: path.join(home, 'settings.seed.yaml'),
     settingsPath: path.join(home, '.dsh', 'settings.yaml'),
     flagPath: path.join(home, '.dsh', FLAG_NAME),
+    // Deterministic environment: the env-gated provider stays off unless a
+    // test passes a key explicitly.
+    env,
     ...overrides,
   })
 }
@@ -42,6 +71,27 @@ function runSeed(overrides = {}) {
 /** The fixture settings document text. */
 async function readSettings() {
   return fsp.readFile(path.join(home, '.dsh', 'settings.yaml'), 'utf8')
+}
+
+/** The fixture credentials document path. */
+function credentialsPath() {
+  return path.join(home, '.dsh', '.credentials.yaml')
+}
+
+/** The fixture credentials document text, or undefined when it is absent. */
+async function readCredentials() {
+  try {
+    return await fsp.readFile(credentialsPath(), 'utf8')
+  } catch (error) {
+    if (error.code === 'ENOENT') return undefined
+    throw error
+  }
+}
+
+/** Write a credentials document into the fixture home. */
+async function writeCredentials(text) {
+  await fsp.mkdir(path.join(home, '.dsh'), { recursive: true })
+  await fsp.writeFile(credentialsPath(), text, { mode: 0o600 })
 }
 
 /** Whether the completion flag exists in the fixture home. */
@@ -95,7 +145,7 @@ beforeEach(async () => {
 })
 
 describe('first seed on an absent document', () => {
-  it('seeds the document verbatim from the seed file and creates the flag', async () => {
+  it('seeds the document from the seed file while no gated key is set', async () => {
     const result = await runSeed()
 
     assert.equal(result.firstSeed, true)
@@ -104,17 +154,17 @@ describe('first seed on an absent document', () => {
     assert.equal(await flagExists(), true)
 
     const text = await readSettings()
-    assert.deepEqual(yaml.parse(text), SEED)
+    assert.deepEqual(yaml.parse(text), SEED_NO_KEY)
     // The commented retryPolicy block stays a comment and is never active.
     assert.match(text, /^ *# *retryPolicy:$/m)
     assert.ok(!('retryPolicy' in yaml.parse(text)['llm-pi-ai'].providers.llm_proxy))
   })
 
-  it('seeds verbatim over an existing but empty document', async () => {
+  it('seeds over an existing but empty document', async () => {
     await writeSettings('')
     const result = await runSeed()
     assert.equal(result.wroteSettings, true)
-    assert.deepEqual(yaml.parse(await readSettings()), SEED)
+    assert.deepEqual(yaml.parse(await readSettings()), SEED_NO_KEY)
     assert.equal(await flagExists(), true)
   })
 })
@@ -132,6 +182,8 @@ describe('first seed over an existing document', () => {
     const settings = yaml.parse(text)
     const llm_proxy = settings['llm-pi-ai'].providers.llm_proxy
 
+    // The env-gated provider stays out while its key variable is empty.
+    assert.equal(settings['llm-pi-ai'].providers.openrouter, undefined)
     // Unknown user section survives.
     assert.deepEqual(settings['ui-onboarding'], { welcomeNoticeVersion: '2026-08-13.1' })
     // First-seed provider fields overwrite stored values.
@@ -266,13 +318,168 @@ describe('runs after the flag exists', () => {
     assert.ok(!('retryPolicy' in yaml.parse(text)['llm-pi-ai'].providers.llm_proxy))
   })
 
-  it('re-seeds verbatim when the document was deleted while the flag exists', async () => {
+  it('re-seeds when the document was deleted while the flag exists', async () => {
     await fsp.unlink(path.join(home, '.dsh', 'settings.yaml'))
     const result = await runSeed()
     assert.equal(result.firstSeed, false)
     assert.equal(result.flagCreated, false)
     assert.equal(await flagExists(), true)
-    assert.deepEqual(yaml.parse(await readSettings()), SEED)
+    assert.deepEqual(yaml.parse(await readSettings()), SEED_NO_KEY)
+  })
+})
+
+describe('env-gated openrouter provider', () => {
+  const OPENROUTER_KEY = { OPENROUTER_API_KEY: 'sk-or-live' }
+  const OPENROUTER_FLAG = () => seedProviderFlagPath('llm-pi-ai', 'openrouter')
+
+  it('is skipped entirely while its key variable is empty', async () => {
+    await writeSettings(EXISTING_SETTINGS)
+
+    const result = await runSeed({ env: { OPENROUTER_API_KEY: '' } })
+
+    assert.equal(result.changed, true)
+    const settings = yaml.parse(await readSettings())
+    assert.equal(settings['llm-pi-ai'].providers.openrouter, undefined)
+    assert.equal(existsSync(OPENROUTER_FLAG()), false)
+    assert.equal(await readCredentials(), undefined)
+  })
+
+  it('adds the provider to an existing document once the key appears', async () => {
+    await writeSettings(EXISTING_SETTINGS)
+
+    const result = await runSeed({ env: OPENROUTER_KEY })
+
+    assert.equal(result.changed, true)
+    const openrouter = yaml.parse(await readSettings())['llm-pi-ai'].providers.openrouter
+    // Seed metadata never reaches the settings document.
+    assert.equal(openrouter.apiKeyEnvRequired, undefined)
+    assert.equal(openrouter.apiKeyEnv, 'OPENROUTER_API_KEY')
+    assert.deepEqual(openrouter.models, SEED['llm-pi-ai'].providers.openrouter.models)
+    assert.ok(existsSync(OPENROUTER_FLAG()))
+    // The key is stored as a credential reference on the first seed.
+    assert.deepEqual(yaml.parse(await readCredentials()), {
+      version: 1,
+      refs: { OPENROUTER_API_KEY: 'sk-or-live' },
+    })
+    const stat = await fsp.stat(credentialsPath())
+    assert.equal(stat.mode & 0o777, 0o600)
+  })
+
+  it('merges seed models into a stored openrouter config without overwriting entries', async () => {
+    await writeSettings(EXISTING_SETTINGS.replace('agent-default-model:', [
+      '    openrouter:',
+      '      apiKeyEnv: OPENROUTER_API_KEY',
+      '      api: openai-completions',
+      '      baseURL: https://openrouter.ai/api/v1',
+      '      models:',
+      '        - id: z-ai/glm-5.3-flash',
+      '          name: My GLM',
+      '          contextWindow: 1',
+      '          maxTokens: 2',
+      '        - id: my-own/openrouter-model',
+      '          name: My Own',
+      'agent-default-model:',
+    ].join('\n')))
+
+    const result = await runSeed({ env: OPENROUTER_KEY, seedText: SEED_TEXT_EXTRA_MODEL })
+
+    assert.equal(result.changed, true)
+    const openrouter = yaml.parse(await readSettings())['llm-pi-ai'].providers.openrouter
+    // Stored entries keep their values and order; missing seed models are appended.
+    assert.deepEqual(openrouter.models, [
+      { id: 'z-ai/glm-5.3-flash', name: 'My GLM', contextWindow: 1, maxTokens: 2 },
+      { id: 'my-own/openrouter-model', name: 'My Own' },
+      { id: 'z-ai/glm-5.2', name: 'GLM 5.2' },
+    ])
+  })
+
+  it('keeps merging models after the flag exists and leaves stored credentials alone', async () => {
+    await writeSettings(EXISTING_SETTINGS)
+    await runSeed({ env: OPENROUTER_KEY })
+
+    // The user deletes the seed model and rotates the stored credential.
+    const text = (await readSettings())
+      .replace('        - id: z-ai/glm-5.3-flash\n          name: GLM 5.3 Flash\n          contextWindow: 500000\n          maxTokens: 131072\n', '')
+    await writeSettings(text)
+    await writeCredentials((await readCredentials()).replace('sk-or-live', 'user-rotated-key'))
+
+    const result = await runSeed({ env: OPENROUTER_KEY })
+    assert.equal(result.changed, true)
+
+    const openrouter = yaml.parse(await readSettings())['llm-pi-ai'].providers.openrouter
+    assert.deepEqual(openrouter.models, SEED['llm-pi-ai'].providers.openrouter.models)
+    // The provider flag gates the reference write: the stored key survives.
+    assert.match(await readCredentials(), /user-rotated-key/)
+  })
+
+  it('re-writes the stored key from the environment when the flag is removed', async () => {
+    await writeSettings(EXISTING_SETTINGS)
+    await runSeed({ env: OPENROUTER_KEY })
+    await writeCredentials((await readCredentials()).replace('sk-or-live', 'user-rotated-key'))
+    await fsp.unlink(OPENROUTER_FLAG())
+
+    await runSeed({ env: { OPENROUTER_API_KEY: 'sk-or-rotated' } })
+
+    const credentials = yaml.parse(await readCredentials())
+    assert.equal(credentials.refs.OPENROUTER_API_KEY, 'sk-or-rotated')
+    assert.ok(existsSync(OPENROUTER_FLAG()))
+  })
+
+  it('preserves comments and other references in the credentials document', async () => {
+    await writeSettings(EXISTING_SETTINGS)
+    await writeCredentials([
+      '# Managed by hand; keep this comment.',
+      'version: 1',
+      'refs:',
+      '  DEEPSEEK_API_KEY: keep-me',
+      '',
+    ].join('\n'))
+
+    await runSeed({ env: OPENROUTER_KEY })
+
+    const text = await readCredentials()
+    assert.match(text, /# Managed by hand; keep this comment./)
+    const refs = yaml.parse(text).refs
+    assert.equal(refs.DEEPSEEK_API_KEY, 'keep-me')
+    assert.equal(refs.OPENROUTER_API_KEY, 'sk-or-live')
+  })
+
+  it('is idempotent with the key present', async () => {
+    await writeSettings(EXISTING_SETTINGS)
+    await runSeed({ env: OPENROUTER_KEY })
+    const settingsBefore = await readSettings()
+    const credentialsBefore = await readCredentials()
+
+    const result = await runSeed({ env: OPENROUTER_KEY })
+
+    assert.equal(result.changed, false)
+    assert.equal(await readSettings(), settingsBefore)
+    assert.equal(await readCredentials(), credentialsBefore)
+  })
+
+  it('fails loud on an unparsable credentials document without writing or flagging', async () => {
+    await writeSettings(EXISTING_SETTINGS)
+    await writeCredentials('refs: [broken\n')
+
+    await assert.rejects(
+      () => runSeed({ env: OPENROUTER_KEY }),
+      /invalid credentials document/,
+    )
+    assert.equal(existsSync(OPENROUTER_FLAG()), false)
+    assert.equal(await readCredentials(), 'refs: [broken\n')
+    // The settings document write happens only after the credentials parse.
+    assert.equal(await readSettings(), EXISTING_SETTINGS)
+  })
+
+  it('refuses a credentials document this script cannot own', async () => {
+    await writeSettings(EXISTING_SETTINGS)
+    await writeCredentials('version: 2\nrefs: {}\n')
+
+    await assert.rejects(
+      () => runSeed({ env: OPENROUTER_KEY }),
+      /unsupported version/,
+    )
+    assert.equal(existsSync(OPENROUTER_FLAG()), false)
   })
 })
 
@@ -331,6 +538,7 @@ describe('CLI smoke test', () => {
   it('runs end-to-end with environment overrides and creates the flag', async () => {
     const env = {
       ...process.env,
+      OPENROUTER_API_KEY: '',
       SETTINGS_SEED_FILE: SEED_PATH,
       DSH_HOME: path.join(home, '.dsh'),
     }
@@ -343,9 +551,10 @@ describe('CLI smoke test', () => {
   })
 
   it('exits non-zero on a broken settings document', async () => {
-    await writeSettings(':::broken:::\n')
+    await writeSettings('a: [unclosed\n')
     const env = {
       ...process.env,
+      OPENROUTER_API_KEY: '',
       SETTINGS_SEED_FILE: SEED_PATH,
       DSH_HOME: path.join(home, '.dsh'),
     }
@@ -363,14 +572,22 @@ describe('per-provider flags', () => {
     await runSeed()
   })
 
-  it('creates one flag file per provider, named after its apiKeyEnv', async () => {
+  it('creates one flag file per seeded provider, named after its apiKeyEnv', async () => {
     const flagDir = path.join(home, '.dsh', PROVIDER_FLAG_DIR_NAME)
     const files = (await fsp.readdir(flagDir)).sort()
     assert.deepEqual(files, ['COPILOT_PROXY_API_KEY', 'LLM_PROXY_API_KEY'])
   })
 
+  it('creates the gated provider flag only while its key is set', async () => {
+    const flagDir = path.join(home, '.dsh', PROVIDER_FLAG_DIR_NAME)
+    await runSeed({ env: { OPENROUTER_API_KEY: 'sk-or-live' } })
+    const files = (await fsp.readdir(flagDir)).sort()
+    assert.deepEqual(files, ['COPILOT_PROXY_API_KEY', 'LLM_PROXY_API_KEY', 'OPENROUTER_API_KEY'])
+  })
+
   it('names flags after apiKeyEnv, falling back to {adapter}_{provider}', () => {
     assert.equal(providerFlagName('llm-pi-ai', 'llm_proxy', SEED['llm-pi-ai'].providers.llm_proxy), 'LLM_PROXY_API_KEY')
+    assert.equal(providerFlagName('llm-pi-ai', 'openrouter', SEED['llm-pi-ai'].providers.openrouter), 'OPENROUTER_API_KEY')
     assert.equal(providerFlagName('llm-pi-ai', 'local', { api: 'openai-completions' }), 'llm-pi-ai_local')
     assert.equal(providerFlagName('llm-pi-ai', 'local', undefined), 'llm-pi-ai_local')
     assert.equal(providerFlagName('llm-pi-ai', 'local', { apiKeyEnv: 'bad/name' }), 'llm-pi-ai_local')
@@ -405,6 +622,7 @@ describe('CLI list and reset modes', () => {
   /** CLI environment pointing at the fixture home and the repository seed. */
   const cliEnv = () => ({
     ...process.env,
+    OPENROUTER_API_KEY: '',
     SETTINGS_SEED_FILE: SEED_PATH,
     DSH_HOME: path.join(home, '.dsh'),
   })
@@ -417,7 +635,7 @@ describe('CLI list and reset modes', () => {
       [SCRIPT_PATH, '--list-providers', '--adapter', 'llm-pi-ai'],
       { env: cliEnv() },
     )
-    assert.deepEqual(providers.stdout.trim().split('\n').sort(), ['copilot_proxy', 'llm_proxy'])
+    assert.deepEqual(providers.stdout.trim().split('\n').sort(), ['copilot_proxy', 'llm_proxy', 'openrouter'])
   })
 
   it('exits non-zero for an unknown adapter or provider', async () => {

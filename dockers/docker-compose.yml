@@ -24,6 +24,7 @@ services:
       # upper case + _API_KEY). An empty value means the key is not provided.
       LLM_PROXY_API_KEY: "${LLM_PROXY_API_KEY:-}"
       COPILOT_PROXY_API_KEY: "${COPILOT_PROXY_API_KEY:-}"
+      OPENROUTER_API_KEY: "${OPENROUTER_API_KEY:-}"
 
     ports:
       # deepseek-harness port
