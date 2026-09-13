@@ -138,13 +138,6 @@ rebuild="$(ask "Rebuild the images before starting? Type 'yes' to rebuild: ")"
 # Remove the old test volumes?
 answer="$(ask "Remove the old test volumes first? Type 'yes' to remove: ")"
 
-if [[ "$rebuild" == "yes" ]]; then
-  echo "The images will be rebuilt before starting."
-  ./tools/build_test_instance.sh
-else
-  echo "Skipping the rebuild (existing images will be used)."
-fi
-
 if [[ "$answer" == "yes" ]]; then
   echo "Removing old test volumes..."
   # Stops and removes the test containers together with every named volume
@@ -159,6 +152,13 @@ if [[ "$answer" == "yes" ]]; then
   fi
 else
   echo "Keeping the existing test volumes (they were not removed)."
+fi
+
+if [[ "$rebuild" == "yes" ]]; then
+  echo "The images will be rebuilt before starting."
+  ./tools/test_instance_build.sh
+else
+  echo "Skipping the rebuild (existing images will be used)."
 fi
 
 echo "Starting the test instance in the foreground (Ctrl+C to stop)..."

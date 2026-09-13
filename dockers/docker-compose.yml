@@ -1,3 +1,5 @@
+name: dsh
+
 include:
   - path:
       - ./dsh-git/docker-compose.yml
