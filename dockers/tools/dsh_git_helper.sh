@@ -237,7 +237,7 @@ delete_branch() {
     echo "Branch '$branch' is the repository's HEAD branch; refusing to delete it." >&2
     return 0
   fi
-  if git_cmd branch -d "$branch"; then
+  if git_cmd branch -D "$branch"; then
     echo "Branch '$branch' deleted."
   else
     echo "Branch '$branch' was not deleted (see the Git message above)." >&2
