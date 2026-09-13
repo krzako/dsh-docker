@@ -53,6 +53,16 @@ function seedWithoutEnvGated() {
 }
 const SEED_NO_KEY = seedWithoutEnvGated()
 
+/** The environment that seeds the copilot provider. */
+const COPILOT_KEY = { COPILOT_PROXY_API_KEY: 'test-copilot-key' }
+
+/** The seed's copilot provider without the seed-only marker field. */
+function seededCopilot() {
+  const provider = structuredClone(SEED['llm-pi-ai'].providers.copilot_proxy)
+  delete provider.apiKeyEnvRequired
+  return provider
+}
+
 let home
 
 /** Run one seed pass against the fixture home. */
@@ -172,7 +182,7 @@ describe('first seed on an absent document', () => {
 describe('first seed over an existing document', () => {
   it('applies one-time and always rules, transfers comments, preserves user content', async () => {
     await writeSettings(EXISTING_SETTINGS)
-    const result = await runSeed()
+    const result = await runSeed({ env: COPILOT_KEY })
 
     assert.equal(result.firstSeed, true)
     assert.equal(result.flagCreated, true)
@@ -217,7 +227,7 @@ describe('first seed over an existing document', () => {
         - id: claude-opus-4.7
           myCustomOption: keep-me
 agent-default-model:`))
-    await runSeed()
+    await runSeed({ env: COPILOT_KEY })
 
     const settings = yaml.parse(await readSettings())
     const copilotProxyModels = settings['llm-pi-ai'].providers.copilot_proxy.models
@@ -232,7 +242,7 @@ agent-default-model:`))
 describe('runs after the flag exists', () => {
   beforeEach(async () => {
     await writeSettings(EXISTING_SETTINGS)
-    await runSeed()
+    await runSeed({ env: COPILOT_KEY })
   })
 
   it('is idempotent: a second run changes nothing', async () => {
@@ -266,7 +276,7 @@ describe('runs after the flag exists', () => {
     text = text.replace('        - id: gpt-5.6-terra\n', '')
     await writeSettings(text)
 
-    const result = await runSeed()
+    const result = await runSeed({ env: COPILOT_KEY })
     assert.equal(result.changed, true)
 
     const settings = yaml.parse(await readSettings())
@@ -280,10 +290,10 @@ describe('runs after the flag exists', () => {
     text = text.replace(/    copilot_proxy:\n(      .*\n|\n)+/, '')
     await writeSettings(text)
 
-    const result = await runSeed()
+    const result = await runSeed({ env: COPILOT_KEY })
     assert.equal(result.changed, true)
     const settings = yaml.parse(await readSettings())
-    assert.deepEqual(settings['llm-pi-ai'].providers.copilot_proxy, SEED['llm-pi-ai'].providers.copilot_proxy)
+    assert.deepEqual(settings['llm-pi-ai'].providers.copilot_proxy, seededCopilot())
   })
 
   it('preserves user-only providers, models, and one-time fields', async () => {
@@ -483,6 +493,47 @@ describe('env-gated openrouter provider', () => {
   })
 })
 
+describe('env-gated copilot provider', () => {
+  const COPILOT_FLAG = () => seedProviderFlagPath('llm-pi-ai', 'copilot_proxy')
+
+  it('is skipped entirely while its key variable is empty', async () => {
+    await writeSettings(EXISTING_SETTINGS)
+
+    const result = await runSeed({ env: {} })
+
+    assert.equal(result.changed, true)
+    const settings = yaml.parse(await readSettings())
+    assert.equal(settings['llm-pi-ai'].providers.copilot_proxy, undefined)
+    assert.equal(existsSync(COPILOT_FLAG()), false)
+    assert.equal(await readCredentials(), undefined)
+  })
+
+  it('adds the provider whole once its key appears', async () => {
+    await writeSettings(EXISTING_SETTINGS)
+
+    await runSeed({ env: COPILOT_KEY })
+
+    const settings = yaml.parse(await readSettings())
+    assert.deepEqual(settings['llm-pi-ai'].providers.copilot_proxy, seededCopilot())
+    assert.ok(existsSync(COPILOT_FLAG()))
+    assert.deepEqual(yaml.parse(await readCredentials()), {
+      version: 1,
+      refs: { COPILOT_PROXY_API_KEY: 'test-copilot-key' },
+    })
+  })
+
+  it('keeps a seeded copilot provider when the key is later empty', async () => {
+    await writeSettings(EXISTING_SETTINGS)
+    await runSeed({ env: COPILOT_KEY })
+
+    const result = await runSeed({ env: {} })
+
+    assert.equal(result.changed, false)
+    const settings = yaml.parse(await readSettings())
+    assert.deepEqual(settings['llm-pi-ai'].providers.copilot_proxy, seededCopilot())
+  })
+})
+
 describe('failure handling', () => {
   it('fails loud on an unparsable settings document without writing or flagging', async () => {
     await writeSettings('llm-pi-ai:\n  providers: [broken\n')
@@ -512,7 +563,7 @@ describe('failure handling', () => {
 describe('atomicity', () => {
   it('leaves no temp files behind', async () => {
     await writeSettings(EXISTING_SETTINGS)
-    await runSeed()
+    await runSeed({ env: { COPILOT_PROXY_API_KEY: 'test-copilot-key', OPENROUTER_API_KEY: 'sk-or-live' } })
     const files = await fsp.readdir(path.join(home, '.dsh'))
     assert.ok(!files.some((f) => f.includes('.seed-tmp-')), `unexpected temp files: ${files.join(', ')}`)
   })
@@ -538,6 +589,7 @@ describe('CLI smoke test', () => {
   it('runs end-to-end with environment overrides and creates the flag', async () => {
     const env = {
       ...process.env,
+      COPILOT_PROXY_API_KEY: '',
       OPENROUTER_API_KEY: '',
       SETTINGS_SEED_FILE: SEED_PATH,
       DSH_HOME: path.join(home, '.dsh'),
@@ -554,6 +606,7 @@ describe('CLI smoke test', () => {
     await writeSettings('a: [unclosed\n')
     const env = {
       ...process.env,
+      COPILOT_PROXY_API_KEY: '',
       OPENROUTER_API_KEY: '',
       SETTINGS_SEED_FILE: SEED_PATH,
       DSH_HOME: path.join(home, '.dsh'),
@@ -569,7 +622,7 @@ describe('CLI smoke test', () => {
 describe('per-provider flags', () => {
   beforeEach(async () => {
     await writeSettings(EXISTING_SETTINGS)
-    await runSeed()
+    await runSeed({ env: COPILOT_KEY })
   })
 
   it('creates one flag file per seeded provider, named after its apiKeyEnv', async () => {
@@ -601,7 +654,7 @@ describe('per-provider flags', () => {
     await writeSettings(text)
     await fsp.unlink(seedProviderFlagPath('llm-pi-ai', 'copilot_proxy'))
 
-    const result = await runSeed()
+    const result = await runSeed({ env: COPILOT_KEY })
     assert.equal(result.changed, true)
 
     const settings = yaml.parse(await readSettings())
@@ -622,6 +675,7 @@ describe('CLI list and reset modes', () => {
   /** CLI environment pointing at the fixture home and the repository seed. */
   const cliEnv = () => ({
     ...process.env,
+    COPILOT_PROXY_API_KEY: '',
     OPENROUTER_API_KEY: '',
     SETTINGS_SEED_FILE: SEED_PATH,
     DSH_HOME: path.join(home, '.dsh'),
@@ -655,7 +709,7 @@ describe('CLI list and reset modes', () => {
 
   it('removes only the selected provider flag via --reset-api-key', async () => {
     await writeSettings(EXISTING_SETTINGS)
-    await runSeed()
+    await runSeed({ env: COPILOT_KEY })
     const args = [SCRIPT_PATH, '--reset-api-key', '--adapter', 'llm-pi-ai', '--provider', 'llm_proxy']
 
     const removed = await execFileAsync(process.execPath, args, { env: cliEnv() })

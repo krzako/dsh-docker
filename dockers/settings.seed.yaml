@@ -49,6 +49,7 @@ llm-pi-ai:
     copilot_proxy:
       defaultInput: [text, image]
       apiKeyEnv: COPILOT_PROXY_API_KEY
+      apiKeyEnvRequired: true
       api: openai-completions
       baseURL: http://copilot-proxy:9091/v1
       models:

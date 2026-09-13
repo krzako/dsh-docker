@@ -199,13 +199,15 @@ baseURL: http://copilot-proxy:9090/v1
 
 If you leave `COPILOT_PROXY_API_KEY` empty, the proxy does not require an Authorization header. If your client insists on an API key, give it any value only when the proxy itself has no key configured.
 
+An empty or unset `COPILOT_PROXY_API_KEY` also keeps the container stopped: the entrypoint exits immediately, so the proxy and the copilot headless runtime never start and nothing is written into the copilot volume. The next start with the key present runs the full setup below.
+
 ## Docker Compose
 
 ```bash
 docker compose up -d --build
 ```
 
-The container first runs `copilot login --host <COPILOT_PROXY_GHE_HOST> --device-code`, then starts the proxy in the background (`nohup`, log at `/app/logs/copilot-proxy/proxy.log`, port `9090`) and `copilot --headless --host 127.0.0.1 --port 4321` as its main process. Runtime logs are written to `/app/logs/copilot-proxy/headless.log`.
+The container first runs `copilot login --host <COPILOT_PROXY_GHE_HOST> --device-code`, then starts the proxy in the background (`nohup`, log at `/app/logs/copilot-proxy/proxy.log`, port `9090`) and `copilot --headless --host 127.0.0.1 --port 4321` as its main process. Runtime logs are written to `/app/logs/copilot-proxy/headless.log`. With no `COPILOT_PROXY_API_KEY` the entrypoint exits before any of that; `docker logs copilot-proxy` shows the reason.
 
 ### Authentication (device code)
 
