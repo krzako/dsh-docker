@@ -99,6 +99,7 @@ services:
       OPENAI_API_BASE_URLS: "http://llm-proxy:9090/v1${OPENROUTER_API_KEY:+;https://openrouter.ai/api/v1}${COPILOT_PROXY_API_KEY:+;http://copilot-proxy:10091/v1}"
       OPENAI_API_KEYS: "${LLM_PROXY_API_KEY}${OPENROUTER_API_KEY:+;${OPENROUTER_API_KEY}}${COPILOT_PROXY_API_KEY:+;${COPILOT_PROXY_API_KEY}}"
       OPENAI_API_CONFIGS: '{"0": {}${OPENROUTER_API_KEY:+,"https://openrouter.ai/api/v1":{"prefix_id":"openrouter"}}${COPILOT_PROXY_API_KEY:+,"http://copilot-proxy:10091/v1":{"prefix_id":"copilot"}}}'
+      TERMINAL_SERVER_CONNECTIONS: '[ ${OPEN_TERMINAL_API_KEY:+{"id":"open-terminal","name":"open-terminal","url":"http://open-terminal:8000","key":"${OPEN_TERMINAL_API_KEY}","auth_type":"bearer","enabled":true}} ]'
 
       ENABLE_WEB_SEARCH: "true"
       WEB_SEARCH_ENGINE: "searxng"
