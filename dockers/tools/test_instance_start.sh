@@ -46,6 +46,10 @@ compose() {
   docker compose -f "$COMPOSE_FILE" "$@"
 }
 
+prepare_bind_volume_dirs() {
+  sh tools/prepare_volumes_dir.sh "$COMPOSE_FILE"
+}
+
 # List every directory under $VOLUMES_DIR whose name ends in "-test"
 # (e.g. workspaces-test, searxng-test): the test instance's bind mounts.
 # Directory names are discovered dynamically -- nothing is hardcoded.
@@ -162,4 +166,5 @@ else
 fi
 
 echo "Starting the test instance in the foreground (Ctrl+C to stop)..."
+prepare_bind_volume_dirs
 compose up

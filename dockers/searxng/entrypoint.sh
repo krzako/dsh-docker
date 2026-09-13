@@ -8,6 +8,7 @@
 #     config is NOT overwritten on subsequent container starts.
 # Delete ".config_loaded" from the config volume to force a regeneration.
 set -eu
+umask 0002
 
 CONFIG_PATH="${__SEARXNG_CONFIG_PATH:-/etc/searxng}"
 FLAG_FILE="$CONFIG_PATH/.config_loaded"

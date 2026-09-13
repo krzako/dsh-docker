@@ -1,6 +1,8 @@
 #!/bin/sh
 set -eu
 
+umask 0002
+
 # Hard-force telemetry settings at runtime.
 # These intentionally override values supplied with `docker run -e`.
 export DSH_TELEMETRY_DISABLED=1
