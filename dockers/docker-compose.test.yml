@@ -96,8 +96,9 @@ services:
       HF_HUB_OFFLINE: "1"
       WEBUI_SECRET_KEY: "${WEBUI_SECRET_KEY:-dsh-local-dev-secret-key}"
 
-      OPENAI_API_BASE_URL: "http://llm-proxy:9090/v1"
-      OPENAI_API_KEY: "${LLM_PROXY_API_KEY}"
+      OPENAI_API_BASE_URLS: "http://llm-proxy:9090/v1${OPENROUTER_API_KEY:+;https://openrouter.ai/api/v1}${COPILOT_PROXY_API_KEY:+;http://copilot-proxy:10091/v1}"
+      OPENAI_API_KEYS: "${LLM_PROXY_API_KEY}${OPENROUTER_API_KEY:+;${OPENROUTER_API_KEY}}${COPILOT_PROXY_API_KEY:+;${COPILOT_PROXY_API_KEY}}"
+      OPENAI_API_CONFIGS: '{"0": {}${OPENROUTER_API_KEY:+,"https://openrouter.ai/api/v1":{"prefix_id":"openrouter"}}${COPILOT_PROXY_API_KEY:+,"http://copilot-proxy:10091/v1":{"prefix_id":"copilot"}}}'
 
       ENABLE_WEB_SEARCH: "true"
       WEB_SEARCH_ENGINE: "searxng"
