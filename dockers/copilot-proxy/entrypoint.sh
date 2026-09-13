@@ -1,4 +1,5 @@
 #!/bin/sh
+umask 0002
 mkdir -p /home/node/.copilot /home/node/.cache
 
 # Token store: keep the CLI's non-interactive plaintext-config switch enabled

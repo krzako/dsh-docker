@@ -6,4 +6,6 @@ COPY proxy.mjs .
 
 USER node
 
+ENTRYPOINT ["/bin/sh", "-c", "umask 0002; exec \"$@\"", "--"]
+
 CMD ["node", "proxy.mjs", "--fix-plan"]
