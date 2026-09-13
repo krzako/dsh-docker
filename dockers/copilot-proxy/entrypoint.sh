@@ -1,4 +1,10 @@
 #!/bin/sh
+if [ -z "${COPILOT_PROXY_API_KEY:-}" ]; then
+    echo "[copilot-proxy] COPILOT_PROXY_API_KEY is not set; keeping the container idle without starting the proxy or the copilot headless runtime." >&2
+    while :; do
+        sleep 86400
+    done
+fi
 umask 0002
 mkdir -p /home/node/.copilot /home/node/.cache
 
