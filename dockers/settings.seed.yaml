@@ -70,6 +70,16 @@ llm-pi-ai:
         - id: gemini-3.5-flash
         - id: gemini-3.1-pro-preview
 
+    openrouter:
+      defaultInput: [text, image]
+      apiKeyEnv: OPENROUTER_API_KEY
+      apiKeyEnvRequired: true
+      models:
+        - id: z-ai/glm-5.3-flash
+          name: GLM 5.3 Flash
+          contextWindow: 500000
+          maxTokens: 131072
+
 agent-default-model:
   provider: llm_proxy
   model: qwen3.8-27b
