@@ -1,23 +1,31 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { CopilotClient, RuntimeConnection, type CopilotSession, type ModelInfo, type Tool } from "@github/copilot-sdk";
+import {
+    CopilotClient,
+    RuntimeConnection,
+    type CopilotSession,
+    type ModelInfo,
+    type Tool,
+} from "@github/copilot-sdk";
 
 import { config } from "../config.js";
 import { proxyLogger } from "../logging/ProxyLogger.js";
 import { buildCopilotInput } from "../openai/serializeMessages.js";
+import { AssistantResponse, type AssistantResponseCallbacks } from "./AssistantResponse.js";
+import { reasoningSummaryFor } from "./reasoningOptions.js";
 import type {
     ChatCompletionRequest,
     ProxyToolCall,
     ProxyUsage,
 } from "../types/openai.js";
 
-export type CompletionCallbacks = {
-    onTextDelta?: (text: string) => void;
+export type CompletionCallbacks = AssistantResponseCallbacks & {
     onToolCall?: (call: ProxyToolCall) => void;
 };
 
 export type CopilotCompletion = {
     content: string;
+    reasoningContent: string;
     toolCalls: ProxyToolCall[];
     usage: ProxyUsage;
     finishReason: string;
@@ -34,6 +42,10 @@ type UsageEventData = {
     finishReason?: string;
     copilotUsage?: { totalNanoAiu?: number };
 };
+
+// Public createSession types in SDK 1.0.8 still expose only these four values,
+// while current runtime model metadata additionally advertises none/minimal/max.
+type SdkReasoningEffort = "low" | "medium" | "high" | "xhigh";
 
 function mapFinishReason(value: string | undefined, hasToolCalls: boolean): string {
     if (hasToolCalls) return "tool_calls";
@@ -114,7 +126,7 @@ export class CopilotGateway {
 
         const { systemMessage, prompt } = buildCopilotInput(request);
         const toolCalls: ProxyToolCall[] = [];
-        let content = "";
+        const assistant = new AssistantResponse(callbacks);
         let providerFinishReason: string | undefined;
         let actualModel: string | undefined;
         const usage: ProxyUsage = {
@@ -173,12 +185,15 @@ export class CopilotGateway {
         // availableTools is mandatory in empty mode, including the [] case.
         const session = await this.#runningClient().createSession({
             model: request.model,
+            reasoningSummary: reasoningSummaryFor(request.reasoning_effort),
             ...(request.reasoning_effort
                 ? {
-                      reasoningEffort: request.reasoning_effort,
+                      // Runtime model metadata already advertises `none`, `minimal`
+                      // and `max`, although the pinned SDK's public union is stale.
+                      reasoningEffort: request.reasoning_effort as SdkReasoningEffort,
                   }
                 : {}),
-            streaming: true,
+            streaming: request.stream === true,
             systemMessage: { mode: "replace", content: systemMessage },
             availableTools: tools.length > 0 ? ["custom:*"] : [],
             tools,
@@ -211,19 +226,8 @@ export class CopilotGateway {
                     // Ignore sub-agent traffic if a future SDK/runtime ever emits it here.
                     if ("agentId" in event && event.agentId) return;
 
+                    assistant.accept(event);
                     switch (event.type) {
-                        case "assistant.message_delta": {
-                            const delta = event.data.deltaContent ?? "";
-                            if (delta) {
-                                content += delta;
-                                callbacks.onTextDelta?.(delta);
-                            }
-                            break;
-                        }
-                        case "assistant.message": {
-                            if (!content && event.data.content) content = event.data.content;
-                            break;
-                        }
                         case "assistant.usage": {
                             const data = event.data as UsageEventData;
                             actualModel = data.model ?? actualModel;
@@ -274,7 +278,8 @@ export class CopilotGateway {
             }
 
             return {
-                content,
+                content: assistant.content,
+                reasoningContent: assistant.reasoningContent,
                 toolCalls,
                 usage,
                 finishReason: mapFinishReason(providerFinishReason, toolCalls.length > 0),

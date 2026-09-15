@@ -96,7 +96,7 @@ export function extractIdentifiers(
         set("external_message_id", metadataValue(request, "message_id"));
     } else if (source === "deepseek-harness") {
         set("deepseek_conversation_id", metadataValue(request, "conversation_id"));
-        set("deepseek_session_id", metadataValue(request, "session_id"));
+        set("deepseek_session_id", metadataValue(request, "session_id") ?? header(req, "x-session-id"));
         set("deepseek_thread_id", metadataValue(request, "thread_id"));
         set("external_message_id", metadataValue(request, "message_id"));
         set("run_id", metadataValue(request, "run_id"));

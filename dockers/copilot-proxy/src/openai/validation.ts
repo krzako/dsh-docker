@@ -1,4 +1,9 @@
-import type { ChatCompletionRequest, OpenAIChatMessage, OpenAIFunctionTool } from "../types/openai.js";
+import type {
+    ChatCompletionRequest,
+    OpenAIChatMessage,
+    OpenAIFunctionTool,
+    ReasoningEffort,
+} from "../types/openai.js";
 import { config } from "../config.js";
 
 export class BadRequestError extends Error {
@@ -37,11 +42,25 @@ function validateTools(value: unknown): asserts value is OpenAIFunctionTool[] {
     }
 }
 
-function validateReasoningEffort(value: unknown): void {
-    if (value === undefined) return;
-    if (!new Set(["low", "medium", "high", "xhigh"]).has(String(value))) {
-        throw new BadRequestError("reasoning_effort must be one of: low, medium, high, xhigh");
+const REASONING_EFFORTS = new Set<ReasoningEffort>([
+    "none",
+    "minimal",
+    "low",
+    "medium",
+    "high",
+    "xhigh",
+    "max",
+]);
+
+function normalizeReasoningEffort(value: unknown): ReasoningEffort | undefined {
+    if (value === undefined || value === "default") return undefined;
+    if (value === "off") return "none";
+    if (typeof value === "string" && REASONING_EFFORTS.has(value as ReasoningEffort)) {
+        return value as ReasoningEffort;
     }
+    throw new BadRequestError(
+        "reasoning_effort must be one of: default, off, none, minimal, low, medium, high, xhigh, max",
+    );
 }
 
 function validateToolChoice(value: unknown, tools: OpenAIFunctionTool[] | undefined): void {
@@ -80,7 +99,7 @@ export function parseChatCompletionRequest(body: unknown): ChatCompletionRequest
     }
     validateMessages(body.messages);
     validateTools(body.tools);
-    validateReasoningEffort(body.reasoning_effort);
+    const reasoningEffort = normalizeReasoningEffort(body.reasoning_effort);
     validateToolChoice(body.tool_choice, body.tools);
     if (body.metadata !== undefined && !isObject(body.metadata)) {
         throw new BadRequestError("metadata must be an object");
@@ -90,5 +109,9 @@ export function parseChatCompletionRequest(body: unknown): ChatCompletionRequest
         throw new BadRequestError("Only n=1 is supported");
     }
 
-    return body as unknown as ChatCompletionRequest;
+    const { reasoning_effort: _inputReasoningEffort, ...rest } = body;
+    return {
+        ...rest,
+        ...(reasoningEffort === undefined ? {} : { reasoning_effort: reasoningEffort }),
+    } as unknown as ChatCompletionRequest;
 }

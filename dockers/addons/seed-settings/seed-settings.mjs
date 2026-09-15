@@ -72,7 +72,7 @@ import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 
 /** Provider fields the seed overwrites on every start. */
-const ALWAYS_PROVIDER_FIELDS = ['defaultInput']
+const ALWAYS_PROVIDER_FIELDS = ['defaultInput', 'headers']
 /** Provider fields the seed overwrites only while the provider flag is absent. */
 const FIRST_SEED_PROVIDER_FIELDS = [
   'displayName',
@@ -397,12 +397,13 @@ function stripSeedMetadata(providerNode) {
  * @param {Record<string, unknown>} seedRoot - JS value of the seed document.
  * @param {boolean} globalFirstSeed - whether the global completion flag is still absent.
  * @param {(adapter: string, provider: string, seedProvider: Record<string, unknown>) => boolean} isProviderFirstSeed - whether the provider's one-time fields may be applied.
+ * @param {(adapter: string, provider: string, seedProvider: Record<string, unknown>) => boolean} isProviderSeeded - whether a completed provider seed permits updates without the original environment credential.
  * @param {{adapter: string, provider: string, apiKeyEnv: string, value: string}[]} credentialsPending - sink collecting credential reference writes decided during the pass.
  * @param {NodeJS.ProcessEnv} env - environment variables, read for apiKeyEnv-gated providers.
  * @param {string[]} ops - change log sink; one entry per applied change.
  * @param {(message: string) => void} log - progress sink for non-change notes.
  */
-function applyMerge(document, seedDocument, settingsRoot, seedRoot, globalFirstSeed, isProviderFirstSeed, credentialsPending, env, ops, log) {
+function applyMerge(document, seedDocument, settingsRoot, seedRoot, globalFirstSeed, isProviderFirstSeed, isProviderSeeded, credentialsPending, env, ops, log) {
   const adapterSections = findAdapterSections(seedRoot)
   if (adapterSections.length === 0) {
     throw new Error('settings-seed: the seed has no adapter sections with a providers map; nothing to merge')
@@ -413,10 +414,12 @@ function applyMerge(document, seedDocument, settingsRoot, seedRoot, globalFirstS
     const seedProvidersNode = seedDocument.getIn(providersPath, true)
 
     // Providers marked apiKeyEnvRequired stay out of the merge entirely
-    // while their key variable is empty or unset.
+    // until their key variable first appears. Once a provider has been seeded,
+    // keep applying deployment-owned updates after its credential has moved to
+    // the durable credentials document and left the process environment.
     const active = []
     for (const [name, seedProvider] of Object.entries(seedSection.providers)) {
-      if (isEnvGatedOff(seedProvider, env)) {
+      if (isEnvGatedOff(seedProvider, env) && !isProviderSeeded(adapterName, name, seedProvider)) {
         log(`provider ${adapterName}/${name}: skipped while ${seedProvider.apiKeyEnv} is not set`)
         continue
       }
@@ -718,6 +721,8 @@ export async function seedSettings(options) {
     }
     return false
   }
+  const isProviderSeeded = (adapter, provider, seedProvider) =>
+    existsSync(providerFlagPath(apiFlagDir, adapter, provider, seedProvider))
 
   // 4. Apply per-provider rules and, on the first seed, global sections. An
   //    absent or empty document behaves like an empty map: the merge then
@@ -739,7 +744,19 @@ export async function seedSettings(options) {
 
   const ops = []
   const credentialsPending = []
-  applyMerge(document, seedDocument, settingsRoot, seedRoot, globalApply, isProviderFirstSeed, credentialsPending, env, ops, log)
+  applyMerge(
+    document,
+    seedDocument,
+    settingsRoot,
+    seedRoot,
+    globalApply,
+    isProviderFirstSeed,
+    isProviderSeeded,
+    credentialsPending,
+    env,
+    ops,
+    log,
+  )
 
   // 5. Parse the credentials document before anything is written: an
   //    unparsable or foreign one fails the run loudly with no document saved

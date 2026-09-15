@@ -226,6 +226,7 @@ async function handleChat(req: IncomingMessage, res: ServerResponse): Promise<vo
             await conversations.appendAssistant(canonical.conversationId, {
                 role: "assistant",
                 content: result.content || null,
+                ...(result.reasoningContent ? { reasoning_content: result.reasoningContent } : {}),
                 ...(result.toolCalls.length > 0
                     ? {
                           tool_calls: result.toolCalls.map((call) => ({
@@ -251,6 +252,9 @@ async function handleChat(req: IncomingMessage, res: ServerResponse): Promise<vo
                         message: {
                             role: "assistant",
                             content: result.content || null,
+                            ...(result.reasoningContent
+                                ? { reasoning_content: result.reasoningContent }
+                                : {}),
                             ...(result.toolCalls.length > 0
                                 ? { tool_calls: openAIToolCalls(result.toolCalls) }
                                 : {}),
@@ -306,6 +310,22 @@ async function handleChat(req: IncomingMessage, res: ServerResponse): Promise<vo
         const result = await gateway.complete(
             request,
             {
+                onReasoningDelta: (text) => {
+                    ensureRole();
+                    sse(res, {
+                        id,
+                        object: "chat.completion.chunk",
+                        created,
+                        model: request.model,
+                        choices: [
+                            {
+                                index: 0,
+                                delta: { reasoning_content: text },
+                                finish_reason: null,
+                            },
+                        ],
+                    }, output);
+                },
                 onTextDelta: (text) => {
                     ensureRole();
                     sse(res, {
@@ -351,6 +371,7 @@ async function handleChat(req: IncomingMessage, res: ServerResponse): Promise<vo
         await conversations.appendAssistant(canonical.conversationId, {
             role: "assistant",
             content: result.content || null,
+            ...(result.reasoningContent ? { reasoning_content: result.reasoningContent } : {}),
             ...(result.toolCalls.length > 0
                 ? {
                       tool_calls: result.toolCalls.map((call) => ({

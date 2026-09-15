@@ -27,6 +27,7 @@ export type OpenAIToolCall = {
 export type OpenAIChatMessage = {
     role: OpenAIRole;
     content?: MessageContent;
+    reasoning_content?: string;
     name?: string;
     tool_call_id?: string;
     tool_calls?: OpenAIToolCall[];
@@ -51,6 +52,8 @@ export type OpenAIToolChoice =
           function: { name: string };
       };
 
+export type ReasoningEffort = "none" | "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+
 export type ChatCompletionRequest = {
     model: string;
     messages: OpenAIChatMessage[];
@@ -59,7 +62,7 @@ export type ChatCompletionRequest = {
     tools?: OpenAIFunctionTool[];
     tool_choice?: OpenAIToolChoice;
     parallel_tool_calls?: boolean;
-    reasoning_effort?: "low" | "medium" | "high" | "xhigh";
+    reasoning_effort?: ReasoningEffort;
     response_format?:
         | { type: "text" }
         | { type: "json_object" }

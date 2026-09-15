@@ -15,7 +15,7 @@ It is intended for clients that can speak the OpenAI Chat Completions protocol (
 - `stream_options.include_usage`
 - OpenAI function tools -> Copilot SDK custom tools -> OpenAI `tool_calls`
 - `system` and `developer` messages
-- `reasoning_effort`: `low`, `medium`, `high`, `xhigh`
+- `reasoning_effort`: `default`, `off`/`none`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max`
 - `response_format` as prompt-level guidance
 - usage extensions for cache reads/writes and Copilot AI credits
 - canonical conversation mapping for OpenCode, DeepSeek Harness and Open WebUI
@@ -37,7 +37,7 @@ the URL does not carry a session identifier.
 | Source | Main conversation ID | Auxiliary IDs | Message ID |
 |---|---|---|---|
 | OpenCode | `session_id` / `x-session-id` | `x-session-affinity` | `message_id` |
-| DeepSeek Harness | `conversation_id`, `session_id`, `thread_id` | `run_id`, `request_id` | `message_id` |
+| DeepSeek Harness | `conversation_id`, `session_id`, `thread_id`, `x-session-id` (header fallback) | `run_id`, `request_id` | `message_id` |
 | Open WebUI | `chat_id` | `session_id` | `message_id` |
 | Proxy | `conversation_id` | external IDs | generated request/message records |
 
@@ -51,7 +51,10 @@ OpenAI-compatible assistant response containing `Copilot Proxy: Unable to recogn
 Open WebUI requests without an explicit chat/session identifier are recognized by
 the observed backend marker `Python/... aiohttp/...`; explicit source and ID fields
 always take precedence.
-
+A DeepSeek Harness request without body metadata still keys its conversation from the
+`x-session-id` transport header (body metadata wins when both are present), which is
+what the Harness `llm-pi-ai` provider sends once its session-affinity compat is enabled;
+send `x-proxy-source: deepseek-harness` so the header is not read as the OpenCode one.
 The durable JSON store defaults to `/home/node/.copilot/proxy-conversations.json` and
 can be changed with `COPILOT_PROXY_CONVERSATION_STORE`. Incoming ordered `messages` are the
 request context and are recorded once per request. The assistant message is appended
@@ -84,6 +87,8 @@ Pinned at creation time:
 - `@github/copilot` 1.0.80
 
 The proxy connects to a `copilot --headless` runtime over TCP on `127.0.0.1:4321` (hardcoded). In Docker that runtime runs in the same container, so the CLI package ships in the image.
+
+The proxy asks Copilot for a `detailed` reasoning summary at every effort level except `off`/`none`, which uses `none`. Copilot `assistant.reasoning_delta` events (or the complete-message `reasoningText` fallback) are forwarded as OpenAI-compatible `choices[0].delta.reasoning_content` chunks before ordinary `delta.content`. Non-streaming responses expose the accumulated text as `choices[0].message.reasoning_content`; consumers such as pi-ai/DSH project that field as thinking rather than ordinary assistant text. The current Copilot runtime does not always emit a visible summary, even when requested; that does not prevent ordinary content from streaming.
 
 ## Install
 
@@ -207,7 +212,7 @@ An empty or unset `COPILOT_PROXY_API_KEY` also keeps the container stopped: the 
 docker compose up -d --build
 ```
 
-The container first runs `copilot login --host <COPILOT_PROXY_GHE_HOST> --device-code`, then starts the proxy in the background (`nohup`, log at `/app/logs/copilot-proxy/proxy.log`, port `9090`) and `copilot --headless --host 127.0.0.1 --port 4321` as its main process. Runtime logs are written to `/app/logs/copilot-proxy/headless.log`. With no `COPILOT_PROXY_API_KEY` the entrypoint exits before any of that; `docker logs copilot-proxy` shows the reason.
+The container starts a short-lived `copilot --headless` probe to check the saved account. When login is required, it stops that runtime before `copilot login --host <COPILOT_PROXY_GHE_HOST> --device-code`, then starts a fresh runtime so the newly persisted token is loaded immediately. Only after that verification does it start the proxy in the background (`nohup`, log at `/app/logs/copilot-proxy/proxy.log`, port `9090`). Runtime logs are written to `/app/logs/copilot-proxy/headless.log`. With no `COPILOT_PROXY_API_KEY` the entrypoint exits before any of that; `docker logs copilot-proxy` shows the reason.
 
 ### Authentication (device code)
 
@@ -222,7 +227,7 @@ To authenticate, visit https://company.ghe.com/login/device and enter code XXXX-
 Waiting for authorization...
 ```
 
-Open the URL in a browser (any machine) and enter the code — there is no local OAuth callback, so it works from the Docker host. The CLI polls for the result; once authorized, the proxy and headless runtime come up.
+Open the URL in a browser (any machine) and enter the code — there is no local OAuth callback, so it works from the Docker host. The CLI polls for the result; once authorized, the entrypoint starts a new headless runtime that reads the token and then brings up the proxy. No container restart is required.
 
 The device code flow is used on purpose: the web flow (`--web-flow`) redirects the browser to `http://127.0.0.1:<port>/callback` inside the container, which a host browser cannot reach.
 
@@ -275,7 +280,7 @@ Current implementation aborts the Copilot turn after the first delegated functio
 
 ## Reasoning effort
 
-The proxy passes `reasoning_effort` through to the SDK. Model support is provider/model dependent, so first inspect `GET /v1/models` and use `copilot.supported_reasoning_efforts` instead of assuming every model accepts every level.
+The proxy passes `reasoning_effort` through to the Copilot runtime. An omitted value or `default` leaves the model default untouched, while `off` is normalized to the runtime value `none`. Model support is provider/model dependent, so first inspect `GET /v1/models` and use `copilot.supported_reasoning_efforts` instead of assuming every model accepts every level. The current runtime may advertise values such as `none`, `minimal`, or `max` that are newer than the pinned SDK's TypeScript union; the proxy intentionally forwards those runtime-advertised values.
 
 ## Unsupported / approximate OpenAI parameters
 

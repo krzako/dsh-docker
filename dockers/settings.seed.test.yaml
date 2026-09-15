@@ -47,6 +47,11 @@ llm-pi-ai:
       apiKeyEnvRequired: true
       api: openai-completions
       baseURL: http://copilot-proxy:10091/v1
+      headers:
+        x-proxy-source: deepseek-harness
+      compat:
+        sendSessionAffinityHeaders: true
+        sessionAffinityFormat: openrouter
       models:
         - id: auto
         - id: claude-opus-4.7
