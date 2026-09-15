@@ -1,0 +1,600 @@
+From c6872725fc64d9821b38c3becbba09206e3ac8aa Mon Sep 17 00:00:00 2001
+From: Krzako <krzako@gmail.com>
+Date: Tue, 15 Sep 2026 00:28:42 +0000
+Subject: [PATCH] feat(llm-pi-ai): offer pi-ai session-affinity compat switches
+
+pi-ai 0.84.2 already turns a request session id into affinity transport headers when the model compat opts in, but the completions gate withheld both switches, so no settings surface could enable them and the id the adapter forwards was dropped. No catalog entry or detection sets these fields - a private gateway must be told - so they belong with the offered surface. copilot-proxy reads x-session-id for its deepseek-harness source, and compaction/title requests carry the same id because every auxiliary call stamps agent.session.id.
+---
+ ...-08-18-pi-ai-wire-compat-surface.i18n.yaml |   4 +-
+ .../2026-08-18-pi-ai-wire-compat-surface.md   |   2 +-
+ ...2026-08-18-pi-ai-wire-compat-surface.zh.md |   2 +-
+ ...4-pi-ai-session-affinity-headers.i18n.yaml |   6 +
+ ...26-09-14-pi-ai-session-affinity-headers.md |  39 ++++++
+ ...09-14-pi-ai-session-affinity-headers.zh.md |  39 ++++++
+ docs/config-catalog.i18n.yaml                 |   4 +-
+ docs/config-catalog.md                        |  23 ++-
+ docs/config-catalog.zh.md                     |  23 ++-
+ packages/llm/llm-pi-ai/README.i18n.yaml       |   4 +-
+ packages/llm/llm-pi-ai/README.md              |   4 +-
+ packages/llm/llm-pi-ai/README.zh.md           |   4 +-
+ packages/llm/llm-pi-ai/src/catalog.ts         |  36 ++++-
+ packages/llm/llm-pi-ai/src/config.ts          |   3 +
+ packages/llm/llm-pi-ai/tests/catalog.spec.ts  |  33 +++++
+ .../llm-pi-ai/tests/session-affinity.spec.ts  | 131 ++++++++++++++++++
+ 16 files changed, 341 insertions(+), 16 deletions(-)
+ create mode 100644 .agents/notes/implemented/feature/2026-09-14-pi-ai-session-affinity-headers.i18n.yaml
+ create mode 100644 .agents/notes/implemented/feature/2026-09-14-pi-ai-session-affinity-headers.md
+ create mode 100644 .agents/notes/implemented/feature/2026-09-14-pi-ai-session-affinity-headers.zh.md
+ create mode 100644 packages/llm/llm-pi-ai/tests/session-affinity.spec.ts
+
+diff --git a/.agents/notes/implemented/feature/2026-08-18-pi-ai-wire-compat-surface.i18n.yaml b/.agents/notes/implemented/feature/2026-08-18-pi-ai-wire-compat-surface.i18n.yaml
+index 8d482bf05e..26393370ad 100644
+--- a/.agents/notes/implemented/feature/2026-08-18-pi-ai-wire-compat-surface.i18n.yaml
++++ b/.agents/notes/implemented/feature/2026-08-18-pi-ai-wire-compat-surface.i18n.yaml
+@@ -2,5 +2,5 @@
+ # side as of the last confirmed-consistent state. Both languages carry equal authority;
+ # after editing either side, bring the other along and re-record with:
+ #   pnpm run verify-translation-pairing --write .agents/notes/implemented/feature/2026-08-18-pi-ai-wire-compat-surface.md
+-2026-08-18-pi-ai-wire-compat-surface.md: 280ce2dd16bb7f89f238c8e0fab07ed74de943f1
+-2026-08-18-pi-ai-wire-compat-surface.zh.md: 1a5704dc8c462a8007d1129de4ec7a51e9bd22a4
++2026-08-18-pi-ai-wire-compat-surface.md: edd924af659c6f6095f6ab982aab72fc75054ef5
++2026-08-18-pi-ai-wire-compat-surface.zh.md: f99b71b4c41a9bae6edcd47307a81eb1369b103b
+diff --git a/.agents/notes/implemented/feature/2026-08-18-pi-ai-wire-compat-surface.md b/.agents/notes/implemented/feature/2026-08-18-pi-ai-wire-compat-surface.md
+index 280ce2dd16..edd924af65 100644
+--- a/.agents/notes/implemented/feature/2026-08-18-pi-ai-wire-compat-surface.md
++++ b/.agents/notes/implemented/feature/2026-08-18-pi-ai-wire-compat-surface.md
+@@ -14,7 +14,7 @@ Writing the field anyway was worse than unsupported. schemastery passes unknown
+ 
+ ## Decision
+ 
+-One drift gate per pi-ai compat type — keyed `Record<keyof OpenAICompletionsCompat | …, CompatDisposition>` — classifies every upstream field as `offer` or `withhold`. Thirty-four distinct fields, twenty-three offered. The line is what a private URL can imply: a deployment must be able to state what nothing can infer from an unrecognized endpoint, while a field pi-ai's installed catalog sets for a named vendor stays withheld, because a route reaching for `openRouterRouting` or `deferredToolsMode` is a catalog route that should be named as such and inherit the value.
++One drift gate per pi-ai compat type — keyed `Record<keyof OpenAICompletionsCompat | …, CompatDisposition>` — classifies every upstream field as `offer` or `withhold`. Thirty-four distinct fields, twenty-five offered. The line is what a private URL can imply: a deployment must be able to state what nothing can infer from an unrecognized endpoint, while a field pi-ai's installed catalog sets for a named vendor stays withheld, because a route reaching for `openRouterRouting` or `deferredToolsMode` is a catalog route that should be named as such and inherit the value. The session-affinity pair is the offer-side exception — no catalog entry sets it — and [[2026-09-14-pi-ai-session-affinity-headers]] owns that decision.
+ 
+ `PiAiCompatProfile` stays an explicit interface with per-field JSDoc — it is what a configuration surface renders and what `docs/config-catalog.md` pastes — and a type-level `AssertNever` over the symmetric difference proves it names exactly the offered set. The schemastery schema is declared `z<PiAiCompatProfile>`, and `exactOptionalPropertyTypes` is what makes that annotation load-bearing in both directions, so the four faces lock together: an upstream field added, a gate entry missing, an interface field forgotten, or a schema key omitted each fails compilation. Field *types* are derived from upstream rather than restated, and a second proof pins the profile assignable to the upstream compat types, so a widened value union cannot silently narrow what configuration accepts — the cast to `ModelCompat` at materialization would otherwise hide it.
+ 
+diff --git a/.agents/notes/implemented/feature/2026-08-18-pi-ai-wire-compat-surface.zh.md b/.agents/notes/implemented/feature/2026-08-18-pi-ai-wire-compat-surface.zh.md
+index 1a5704dc8c..f99b71b4c4 100644
+--- a/.agents/notes/implemented/feature/2026-08-18-pi-ai-wire-compat-surface.zh.md
++++ b/.agents/notes/implemented/feature/2026-08-18-pi-ai-wire-compat-surface.zh.md
+@@ -14,7 +14,7 @@ pi-ai 依据提供方 id 与 baseURL 决定每个请求的形状——系统提
+ 
+ ## Decision
+ 
+-每个 pi-ai compat 类型一张漂移门禁——以 `Record<keyof OpenAICompletionsCompat | …, CompatDisposition>` 为键——把每一个上游字段分类为 `offer` 或 `withhold`。去重后三十四个字段，开放二十三个。分界线在于私有 URL 能推出什么：凡是无法从未识别端点推断的，部署方必须能够说出口；而 pi-ai 已安装 catalog 为具名厂商设定的字段保持扣留，因为伸手去够 `openRouterRouting` 或 `deferredToolsMode` 的路由，本就是一条应当以该厂商命名、并继承其值的 catalog 路由。
++每个 pi-ai compat 类型一张漂移门禁——以 `Record<keyof OpenAICompletionsCompat | …, CompatDisposition>` 为键——把每一个上游字段分类为 `offer` 或 `withhold`。去重后三十四个字段，开放二十五个。分界线在于私有 URL 能推出什么：凡是无法从未识别端点推断的，部署方必须能够说出口；而 pi-ai 已安装 catalog 为具名厂商设定的字段保持扣留，因为伸手去够 `openRouterRouting` 或 `deferredToolsMode` 的路由，本就是一条应当以该厂商命名、并继承其值的 catalog 路由。会话亲和这一对字段是 offer 侧的例外——没有目录条目设置它们——其决策见 [[2026-09-14-pi-ai-session-affinity-headers]]。
+ 
+ `PiAiCompatProfile` 保持为带逐字段 JSDoc 的显式 interface——它是配置界面所渲染、也是 `docs/config-catalog.md` 所粘贴的东西——并由一个作用在对称差上的类型级 `AssertNever` 证明它恰好命名了开放集。schemastery schema 声明为 `z<PiAiCompatProfile>`，而使这条标注在两个方向上都真正吃劲的是 `exactOptionalPropertyTypes`，于是四个面互锁：上游新增字段、门禁漏一条、interface 忘记一个字段、schema 少一个键，都会在编译期失败。字段的**类型**派生自上游而非重述，另有一条证明把 profile 钉为可赋值给上游 compat 类型，因此被拓宽的值并集不会悄悄收窄配置所接受的范围——否则物化处对 `ModelCompat` 的强转会把它洗掉。
+ 
+diff --git a/.agents/notes/implemented/feature/2026-09-14-pi-ai-session-affinity-headers.i18n.yaml b/.agents/notes/implemented/feature/2026-09-14-pi-ai-session-affinity-headers.i18n.yaml
+new file mode 100644
+index 0000000000..2c5c3b5096
+--- /dev/null
++++ b/.agents/notes/implemented/feature/2026-09-14-pi-ai-session-affinity-headers.i18n.yaml
+@@ -0,0 +1,6 @@
++# Bilingual-pair consistency record (docs/i18n/README.md): the git blob hash of each
++# side as of the last confirmed-consistent state. Both languages carry equal authority;
++# after editing either side, bring the other along and re-record with:
++#   pnpm run verify-translation-pairing --write .agents/notes/implemented/feature/2026-09-14-pi-ai-session-affinity-headers.md
++2026-09-14-pi-ai-session-affinity-headers.md: 31bffdbdab536a4c905474fbc107308249ad6f0d
++2026-09-14-pi-ai-session-affinity-headers.zh.md: 89df159431df9615102e3048772af839e408117c
+diff --git a/.agents/notes/implemented/feature/2026-09-14-pi-ai-session-affinity-headers.md b/.agents/notes/implemented/feature/2026-09-14-pi-ai-session-affinity-headers.md
+new file mode 100644
+index 0000000000..31bffdbdab
+--- /dev/null
++++ b/.agents/notes/implemented/feature/2026-09-14-pi-ai-session-affinity-headers.md
+@@ -0,0 +1,39 @@
++# Agent Note: Session-Affinity Transport Headers for Hand-Declared pi-ai Routes
++
++Status: implemented
++
++English | [中文](2026-09-14-pi-ai-session-affinity-headers.zh.md)
++
++## Problem
++
++A private OpenAI-compatible gateway needs a stable per-conversation identifier on the wire — copilot-proxy keys its conversation records on one — and the harness already owns the right value: the loop stamps every model request with the durable session id at `GenerateOptions.sessionId`, and `dsh-llm-pi-ai` forwards it to pi-ai. pi-ai's `openai-completions` implementation turns that id into session-affinity transport headers whenever a model's compat carries `sendSessionAffinityHeaders`, but DSH's compat gate classified `sendSessionAffinityHeaders` and `sessionAffinityFormat` as `withhold`, so no settings surface could enable them. The id pi-ai already received was dropped on the floor, and requests reached the gateway with no session identity; the gateway's own records could not tell one harness conversation from another.
++
++The `withhold` disposition exists for fields the installed pi-ai catalog already sets for a named vendor — a route reaching for one should be named as that vendor instead. Neither of these fields fits: no catalog entry sets them, pi-ai's detection defaults them off, and a private gateway's URL implies nothing about affinity. The classification was simply wrong for the one surface — a private gateway that must be *told* — the configurable compat exists for.
++
++## Decision
++
++The two fields are offered for `openai-completions` and configurable per route and per model like every other compat switch, on the owning surface described in [[2026-08-18-pi-ai-wire-compat-surface]]:
++
++- `sendSessionAffinityHeaders` — whether a request carrying a session id rides affinity transport headers at all.
++- `sessionAffinityFormat` — the spelling: `openrouter` sends `x-session-id`; `openai` sends `session_id` plus `x-client-request-id` and `x-session-affinity`; `openai-nosession` sends that pair without `session_id`.
++
++`sessionAffinityFormat` is derived from pi-ai's own compat type behind a `Record` key drift gate (`PiAiSessionAffinityFormat`), so an upstream format addition fails compilation until named. The fields stay withheld on `openai-responses`, `azure-openai-responses`, `openai-codex-responses`, and `anthropic-messages`: no current consumer speaks them through this route, and a switch a protocol cannot read is refused where it is written rather than silently skipped.
++
++Precedence on the wire stays pi-ai's own: affinity headers are built before the request's `headers` are merged last, so an explicitly configured profile header wins a name collision. A request without a session id sends no header, and a `cacheRetention: none` profile drops the id with the cache — pi-ai treats the id as prompt-cache state — which the wire spec pins so an upgrade cannot change it silently. The session id itself is untouched: no second id is minted anywhere, and the id travels only as transport metadata, never in messages or token accounting.
++
++## Alternatives considered
++
++**Generic header templating** (`headers: {x-session-id: "{sessionId}"}`). A placeholder whitelist, missing-id semantics, and collision rules duplicating what pi-ai already implements, for one gateway's sake. Revisited only if a gateway needs a header name pi-ai's formats cannot spell.
++
++**A `sessionHeader` provider field.** Narrower than templating but still re-teaches the adapter what pi-ai's compat already carries, and cannot spell the `openai` triple. No consumer needs it.
++
++**Keying conversations inside copilot-proxy from its own generated ids.** The gateway would invent identity the harness already owns; records from different harness conversations would merge into one proxy conversation. Rejected in favor of translating the incoming affinity header (the proxy reads `x-session-id` for its `deepseek-harness` source, body metadata still winning).
++
++**Offering the fields for the Responses and Anthropic protocols too.** Deferred until a consumer speaks those protocols through this surface; the gate flip is two lines then.
++
++## Consequences
++
++- A hand-declared completions gateway can be given a stable per-conversation affinity id entirely from `settings.yaml` — `compat: {sendSessionAffinityHeaders: true, sessionAffinityFormat: openrouter}` sends `x-session-id: <session id>` on every request the loop, compaction, and title generation make for that session.
++- `copilot-proxy` keys a DeepSeek Harness conversation from the `x-session-id` transport header when no body metadata carries one, and the deployment sends `x-proxy-source: deepseek-harness` as a static profile header so the affinity header is not read as OpenCode's.
++- The routing stays opt-in per provider: a route without the switches sends exactly what it sent before, including every OpenAI-compatible gateway that rejects unknown headers.
++- Coverage: `tests/session-affinity.spec.ts` asserts the real HTTP wire — stability within a session, separation across sessions, the `openai` spelling set, no id → no header, `cacheRetention: none` → no header, explicit-header precedence, and non-opted-in provider isolation — and `tests/catalog.spec.ts` covers route- and model-level application plus the protocol refusals.
+diff --git a/.agents/notes/implemented/feature/2026-09-14-pi-ai-session-affinity-headers.zh.md b/.agents/notes/implemented/feature/2026-09-14-pi-ai-session-affinity-headers.zh.md
+new file mode 100644
+index 0000000000..89df159431
+--- /dev/null
++++ b/.agents/notes/implemented/feature/2026-09-14-pi-ai-session-affinity-headers.zh.md
+@@ -0,0 +1,39 @@
++# Agent Note: 手声明 pi-ai 路由的会话亲和传输头
++
++Status: implemented
++
++[English](2026-09-14-pi-ai-session-affinity-headers.md) | 中文
++
++## 问题
++
++一个私有的 OpenAI 兼容网关需要在请求上携带稳定的每会话标识——copilot-proxy 用它来组织自己的会话记录——而正确的值本就由 harness 持有：agent loop 在 `GenerateOptions.sessionId` 上为每个模型请求打上持久的会话 id，`dsh-llm-pi-ai` 又把它转发给 pi-ai。只要模型的 compat 带 `sendSessionAffinityHeaders`，pi-ai 的 `openai-completions` 实现就会把这个 id 变成会话亲和传输头；但 DSH 的 compat 门把 `sendSessionAffinityHeaders` 和 `sessionAffinityFormat` 归为 `withhold`，任何配置面都无法启用它们。pi-ai 已经拿到的 id 被丢弃，请求到达网关时不带任何会话身份；网关自己的记录无法区分不同的 harness 会话。
++
++`withhold` 的适用前提是“已安装的 pi-ai 目录已经替某个具名厂商设置好了该字段”——想去配置它就该改用那个厂商的目录路由。这两个字段都不满足：没有任何目录条目设置它们，pi-ai 的检测默认关闭它们，而私有网关的 URL 也推不出任何亲和语义。这个分类对“必须显式告知”的可配置 compat 面而言就是错的。
++
++## 决策
++
++这两个字段对 `openai-completions` 改为 `offer`，并像其他 compat 开关一样可按路由、按模型配置，宿主面见 [[2026-08-18-pi-ai-wire-compat-surface]]：
++
++- `sendSessionAffinityHeaders`——携带会话 id 的请求是否随行亲和传输头。
++- `sessionAffinityFormat`——头的拼法：`openrouter` 发送 `x-session-id`；`openai` 发送 `session_id` 加 `x-client-request-id` 和 `x-session-affinity`；`openai-nosession` 发送后者这对、不带 `session_id`。
++
++`sessionAffinityFormat` 经 `Record` 键漂移门（`PiAiSessionAffinityFormat`）从 pi-ai 自己的 compat 类型派生，上游新增拼法会在编译期失败直到被命名。这两个字段对 `openai-responses`、`azure-openai-responses`、`openai-codex-responses` 和 `anthropic-messages` 保持 `withhold`：当前没有消费方经此路由使用这些协议，协议读不懂的开关应在写入处被拒绝而不是被静默跳过。
++
++线上的优先级沿用 pi-ai 自身的行为：亲和头先构建，请求的 `headers` 最后合并，所以显式配置的 profile 头在同名冲突时胜出。不带会话 id 的请求不发送任何亲和头；`cacheRetention: none` 的 profile 会把 id 连同缓存一起丢弃——pi-ai 把该 id 当作 prompt-cache 状态——线级测试把这一点钉住，上游升级无法悄悄改变它。会话 id 本身不动：不在任何地方再造第二个 id，id 只作为传输元数据旅行，绝不进入消息或 token 记账。
++
++## 备选方案
++
++**通用头模板**（`headers: {x-session-id: "{sessionId}"}`）。占位符白名单、缺 id 语义、冲突规则——为一两个网关重造 pi-ai 已经实现的东西。只有当某个网关需要 pi-ai 拼法表达不了的头名时才重新考虑。
++
++**`sessionHeader` provider 字段。**比模板窄，但仍然是把 pi-ai compat 已承载的能力重新教给适配器，而且拼不出 `openai` 三件套。没有消费方需要它。
++
++**在 copilot-proxy 内部用自己生成的 id 组织会话。**网关会发明 harness 已有的身份；不同 harness 会话的记录会并进同一个代理会话。已否决，改为翻译入站的亲和头（代理为其 `deepseek-harness` 来源读取 `x-session-id`，body 元数据仍在时优先）。
++
++**同时为 Responses 与 Anthropic 协议 offer。**等有消费方经此面使用这些协议再说；届时门开关只改两行。
++
++## 后果
++
++- 手声明的 completions 网关可以完全靠 `settings.yaml` 获得稳定的每会话亲和 id——`compat: {sendSessionAffinityHeaders: true, sessionAffinityFormat: openrouter}` 让 loop、compaction、标题生成对该会话的每个请求都发送 `x-session-id: <session id>`。
++- `copilot-proxy` 在没有 body 元数据时按 `x-session-id` 传输头组织 DeepSeek Harness 会话；部署同时以静态 profile 头发送 `x-proxy-source: deepseek-harness`，避免亲和头被当成 OpenCode 的。
++- 路由保持按 provider 选择性加入：未启用开关的路由发出的请求与之前完全一致，包括拒绝未知头的 OpenAI 兼容网关。
++- 覆盖：`tests/session-affinity.spec.ts` 断言真实 HTTP 线——同一会话内稳定、跨会话区分、`openai` 拼法集合、无 id 不发头、`cacheRetention: none` 不发头、显式头优先、未加入的 provider 不受影响——`tests/catalog.spec.ts` 覆盖路由级与模型级应用及协议拒绝。
+diff --git a/docs/config-catalog.i18n.yaml b/docs/config-catalog.i18n.yaml
+index df25b46feb..3bbfdd2993 100644
+--- a/docs/config-catalog.i18n.yaml
++++ b/docs/config-catalog.i18n.yaml
+@@ -2,5 +2,5 @@
+ # side as of the last confirmed-consistent state. Both languages carry equal authority;
+ # after editing either side, bring the other along and re-record with:
+ #   pnpm run verify-translation-pairing --write docs/config-catalog.md
+-config-catalog.md: af72b832723423745817fd340022e65c0c066d36
+-config-catalog.zh.md: 6d961f22b3c29fbc4355e99c8de55823e014b74c
++config-catalog.md: dcc6b233d77aeac448f81d4a57b1e94cfa04d224
++config-catalog.zh.md: 21ac6f307d0ad0a3ff9e736b0d163f8b1030d83e
+diff --git a/docs/config-catalog.md b/docs/config-catalog.md
+index af72b83272..dcc6b233d7 100644
+--- a/docs/config-catalog.md
++++ b/docs/config-catalog.md
+@@ -1238,6 +1238,25 @@ export interface PiAiCompatProfile {
+   supportsStrictMode?: boolean
+   /** Prompt-cache marker convention; `openai-completions`. */
+   cacheControlFormat?: NonNullable<OpenAICompletionsCompat['cacheControlFormat']>
++  /**
++   * Whether a request carrying a session id rides session-affinity transport
++   * headers, spelled by {@link sessionAffinityFormat}; `openai-completions`.
++   * The session id is the harness conversation's own `GenerateOptions`-level
++   * identity — a private gateway can key request routing or its own conversation
++   * records on it. A request without a session id sends no affinity header, and
++   * a profile naming `cacheRetention: none` sends none either, because pi-ai
++   * treats the id as prompt-cache state and drops it with the cache.
++   */
++  sendSessionAffinityHeaders?: boolean
++  /**
++   * Session-affinity header spellings; `openai-completions`, read only when
++   * {@link sendSessionAffinityHeaders} is set. `openrouter` sends
++   * `x-session-id`; `openai` sends `session_id` plus `x-client-request-id`
++   * and `x-session-affinity`; `openai-nosession` sends that pair without
++   * `session_id`. The prompt-cache `prompt_cache_key` body field is
++   * cache-retention business and follows its own rules, not this switch.
++   */
++  sessionAffinityFormat?: NonNullable<OpenAICompletionsCompat['sessionAffinityFormat']>
+   /**
+    * Whether the endpoint accepts long prompt-cache retention;
+    * `openai-completions`, the three Responses protocols, `anthropic-messages`.
+@@ -1276,7 +1295,7 @@ export type PiAiThinkingFormat = NonNullable<OpenAICompletionsCompat['thinkingFo
+ 
+ Depends on: `Api` (`@earendil-works/pi-ai`) · `CacheRetention` (`@earendil-works/pi-ai`) · `Model` (`@earendil-works/pi-ai`) · `ModelThinkingLevel` (`@earendil-works/pi-ai`) · `OpenAICompletionsCompat` (`@earendil-works/pi-ai`) · [`RetryPolicyConfig`](../packages/llm/llm/src/index.ts) · `ThinkingBudgets` (`@earendil-works/pi-ai`) · `Transport` (`@earendil-works/pi-ai`)
+ 
+-Source: [`packages/llm/llm-pi-ai/src/config.ts:216`](../packages/llm/llm-pi-ai/src/config.ts)
++Source: [`packages/llm/llm-pi-ai/src/config.ts:217`](../packages/llm/llm-pi-ai/src/config.ts)
+ 
+ <a id="deepseek-aidsh-llm-replay"></a>
+ 
+@@ -1353,7 +1372,7 @@ export interface ReplayModelConfig {
+ 
+ Depends on: [`ModelModality`](../packages/llm/llm/src/index.ts) · [`RetryPolicyConfig`](../packages/llm/llm/src/index.ts)
+ 
+-Source: [`packages/test-support/llm-replay/src/index.ts:1294`](../packages/test-support/llm-replay/src/index.ts)
++Source: [`packages/test-support/llm-replay/src/index.ts:1293`](../packages/test-support/llm-replay/src/index.ts)
+ 
+ <a id="deepseek-aidsh-llm-retry"></a>
+ 
+diff --git a/docs/config-catalog.zh.md b/docs/config-catalog.zh.md
+index 6d961f22b3..21ac6f307d 100644
+--- a/docs/config-catalog.zh.md
++++ b/docs/config-catalog.zh.md
+@@ -1240,6 +1240,25 @@ export interface PiAiCompatProfile {
+   supportsStrictMode?: boolean
+   /** Prompt-cache marker convention; `openai-completions`. */
+   cacheControlFormat?: NonNullable<OpenAICompletionsCompat['cacheControlFormat']>
++  /**
++   * Whether a request carrying a session id rides session-affinity transport
++   * headers, spelled by {@link sessionAffinityFormat}; `openai-completions`.
++   * The session id is the harness conversation's own `GenerateOptions`-level
++   * identity — a private gateway can key request routing or its own conversation
++   * records on it. A request without a session id sends no affinity header, and
++   * a profile naming `cacheRetention: none` sends none either, because pi-ai
++   * treats the id as prompt-cache state and drops it with the cache.
++   */
++  sendSessionAffinityHeaders?: boolean
++  /**
++   * Session-affinity header spellings; `openai-completions`, read only when
++   * {@link sendSessionAffinityHeaders} is set. `openrouter` sends
++   * `x-session-id`; `openai` sends `session_id` plus `x-client-request-id`
++   * and `x-session-affinity`; `openai-nosession` sends that pair without
++   * `session_id`. The prompt-cache `prompt_cache_key` body field is
++   * cache-retention business and follows its own rules, not this switch.
++   */
++  sessionAffinityFormat?: NonNullable<OpenAICompletionsCompat['sessionAffinityFormat']>
+   /**
+    * Whether the endpoint accepts long prompt-cache retention;
+    * `openai-completions`, the three Responses protocols, `anthropic-messages`.
+@@ -1278,7 +1297,7 @@ export type PiAiThinkingFormat = NonNullable<OpenAICompletionsCompat['thinkingFo
+ 
+ 依赖：`Api`（`@earendil-works/pi-ai`）· `CacheRetention`（`@earendil-works/pi-ai`）· `Model`（`@earendil-works/pi-ai`）· `ModelThinkingLevel`（`@earendil-works/pi-ai`）· `OpenAICompletionsCompat`（`@earendil-works/pi-ai`）· [`RetryPolicyConfig`](../packages/llm/llm/src/index.ts) · `ThinkingBudgets`（`@earendil-works/pi-ai`）· `Transport`（`@earendil-works/pi-ai`)
+ 
+-来源：[`packages/llm/llm-pi-ai/src/config.ts:213`](../packages/llm/llm-pi-ai/src/config.ts)
++来源：[`packages/llm/llm-pi-ai/src/config.ts:217`](../packages/llm/llm-pi-ai/src/config.ts)
+ 
+ <a id="deepseek-aidsh-llm-replay"></a>
+ 
+@@ -1355,7 +1374,7 @@ export interface ReplayModelConfig {
+ 
+ 依赖：[`ModelModality`](../packages/llm/llm/src/index.ts) · [`RetryPolicyConfig`](../packages/llm/llm/src/index.ts)
+ 
+-来源：[`packages/test-support/llm-replay/src/index.ts:1294`](../packages/test-support/llm-replay/src/index.ts)
++来源：[`packages/test-support/llm-replay/src/index.ts:1293`](../packages/test-support/llm-replay/src/index.ts)
+ 
+ <a id="deepseek-aidsh-llm-retry"></a>
+ 
+diff --git a/packages/llm/llm-pi-ai/README.i18n.yaml b/packages/llm/llm-pi-ai/README.i18n.yaml
+index 656439bf24..8d77ca0297 100644
+--- a/packages/llm/llm-pi-ai/README.i18n.yaml
++++ b/packages/llm/llm-pi-ai/README.i18n.yaml
+@@ -2,5 +2,5 @@
+ # side as of the last confirmed-consistent state. Both languages carry equal authority;
+ # after editing either side, bring the other along and re-record with:
+ #   pnpm run verify-translation-pairing --write packages/llm/llm-pi-ai/README.md
+-README.md: c0aacbe3e0b727cd7b6b163814dc96859b954b9c
+-README.zh.md: 7b8cef7db2ba5cebe3e42345b308716ae0099c03
++README.md: 58fc991ea18e5a1e8b87fbf3829c656586ff4a96
++README.zh.md: a2df270ad71ee3ba72a8ad60cbc106b3aeb94ea2
+diff --git a/packages/llm/llm-pi-ai/README.md b/packages/llm/llm-pi-ai/README.md
+index c0aacbe3e0..58fc991ea1 100644
+--- a/packages/llm/llm-pi-ai/README.md
++++ b/packages/llm/llm-pi-ai/README.md
+@@ -61,6 +61,8 @@ Each profile may set a `retryPolicy`; omission uses normal mode with five retrie
+         baseURL: https://gateway.acme.example/v1
+         compat:
+           thinkingFormat: deepseek
++          sendSessionAffinityHeaders: true
++          sessionAffinityFormat: openrouter
+         models:
+           - id: acme-think
+             name: Acme Think
+@@ -98,7 +100,7 @@ A profile's `models` list replaces the route's installed catalog rather than ext
+ 
+ ### Run with reasoning and wire compatibility
+ 
+-`reasoningEfforts` declares a model's selectable thinking levels: each key is a level selectors offer, its value the spelling dispatch sends on the wire, so `max: ultra` renames a level for a gateway with its own vocabulary. Omitting the field keeps the installed catalog entry's capability; `false` declares a non-reasoning model. `compat` switches reshape the request for endpoints pi-ai cannot recognize — which role carries the system prompt, which field caps output, how a thinking level travels — configurable per route and per model. A model neither the entry nor the installed catalog sizes takes the route's `defaultContextWindow` and `defaultMaxTokens` fallbacks.
++`reasoningEfforts` declares a model's selectable thinking levels: each key is a level selectors offer, its value the spelling dispatch sends on the wire, so `max: ultra` renames a level for a gateway with its own vocabulary. Omitting the field keeps the installed catalog entry's capability; `false` declares a non-reasoning model. `compat` switches reshape the request for endpoints pi-ai cannot recognize — which role carries the system prompt, which field caps output, how a thinking level travels — configurable per route and per model. With `sendSessionAffinityHeaders` set, a request carrying the loop's session id rides the transport headers `sessionAffinityFormat` spells — `openrouter` sends `x-session-id`; `openai` and `openai-nosession` send the `x-client-request-id` pair, the former adding `session_id` — model-hidden metadata a gateway can key on: absent on a request without a session id, dropped with the cache by a `cacheRetention: none` profile, and overridden by an explicit `headers` value on a name collision. A model neither the entry nor the installed catalog sizes takes the route's `defaultContextWindow` and `defaultMaxTokens` fallbacks.
+ 
+ ### Change configuration at runtime
+ 
+diff --git a/packages/llm/llm-pi-ai/README.zh.md b/packages/llm/llm-pi-ai/README.zh.md
+index 7b8cef7db2..a2df270ad7 100644
+--- a/packages/llm/llm-pi-ai/README.zh.md
++++ b/packages/llm/llm-pi-ai/README.zh.md
+@@ -61,6 +61,8 @@ kind: "package-reference"
+         baseURL: https://gateway.acme.example/v1
+         compat:
+           thinkingFormat: deepseek
++          sendSessionAffinityHeaders: true
++          sessionAffinityFormat: openrouter
+         models:
+           - id: acme-think
+             name: Acme Think
+@@ -98,7 +100,7 @@ profile 的 `models` 列表会替换而非扩展路由的已安装目录；每
+ 
+ ### 带推理与协议兼容运行
+ 
+-`reasoningEfforts` 声明模型可选择的 thinking 等级：每个键都是选择器提供的等级，其值是该等级过线的拼写，因此 `max: ultra` 可以为拥有自有词汇的网关重命名等级。省略该字段时保留已安装目录条目的能力；`false` 声明非推理模型。对于 pi-ai 无法识别的端点，`compat` 开关重塑请求——哪个角色携带系统提示词、哪个字段限制输出、thinking 等级如何传递——可逐路由、逐模型配置。条目与已安装目录都没有尺寸的模型，会采用路由的 `defaultContextWindow` 与 `defaultMaxTokens` 回退值。
++`reasoningEfforts` 声明模型可选择的 thinking 等级：每个键都是选择器提供的等级，其值是该等级过线的拼写，因此 `max: ultra` 可以为拥有自有词汇的网关重命名等级。省略该字段时保留已安装目录条目的能力；`false` 声明非推理模型。对于 pi-ai 无法识别的端点，`compat` 开关重塑请求——哪个角色携带系统提示词、哪个字段限制输出、thinking 等级如何传递——可逐路由、逐模型配置。设置 sendSessionAffinityHeaders 后，携带 loop 会话 id 的请求会随行 sessionAffinityFormat 拼出的传输头——openrouter 发送 x-session-id；openai 与 openai-nosession 发送 x-client-request-id 一对头，前者另加 session_id——这是网关可作为键的模型不可见元数据：不带会话 id 的请求一概不发，cacheRetention: none 的 profile 把 id 连同缓存一起丢弃，同名冲突时显式 headers 值胜出。条目与已安装目录都没有尺寸的模型，会采用路由的 `defaultContextWindow` 与 `defaultMaxTokens` 回退值。
+ 
+ ### 运行时更改配置
+ 
+diff --git a/packages/llm/llm-pi-ai/src/catalog.ts b/packages/llm/llm-pi-ai/src/catalog.ts
+index a4b7d97ebe..60c6c7b115 100644
+--- a/packages/llm/llm-pi-ai/src/catalog.ts
++++ b/packages/llm/llm-pi-ai/src/catalog.ts
+@@ -136,6 +136,19 @@ const CACHE_CONTROL_FORMAT_GATE: Record<PiAiCacheControlFormat, true> = {
+ /** The prompt-cache marker conventions a profile may name. */
+ export const CACHE_CONTROL_FORMATS = Object.keys(CACHE_CONTROL_FORMAT_GATE) as readonly PiAiCacheControlFormat[]
+ 
++/** The session-affinity header spellings pi-ai accepts. */
++export type PiAiSessionAffinityFormat = NonNullable<OpenAICompletionsCompat['sessionAffinityFormat']>
++
++/** Drift gate over {@link PiAiSessionAffinityFormat}; a new upstream spelling fails compilation until named. */
++const SESSION_AFFINITY_FORMAT_GATE: Record<PiAiSessionAffinityFormat, true> = {
++  'openai': true,
++  'openai-nosession': true,
++  'openrouter': true,
++}
++
++/** Session-affinity header spellings a profile may name. */
++export const SESSION_AFFINITY_FORMATS = Object.keys(SESSION_AFFINITY_FORMAT_GATE) as readonly PiAiSessionAffinityFormat[]
++
+ /** The request-state placeholders a `chat_template_kwargs` value may name. */
+ export type PiAiChatTemplateVar = Extract<ChatTemplateKwargValue, { $var: string }>['$var']
+ 
+@@ -236,9 +249,9 @@ const COMPLETIONS_COMPAT_GATE = {
+   vercelGatewayRouting: 'withhold',
+   zaiToolStream: 'withhold',
+   supportsOpenAIGrammarTools: 'withhold',
+-  sendSessionAffinityHeaders: 'withhold',
++  sendSessionAffinityHeaders: 'offer',
+   deferredToolsMode: 'withhold',
+-  sessionAffinityFormat: 'withhold',
++  sessionAffinityFormat: 'offer',
+ } as const satisfies Record<keyof OpenAICompletionsCompat, CompatDisposition>
+ 
+ /** Disposition of every `OpenAIResponsesCompat` field; a drift gate like the one above. */
+@@ -386,6 +399,25 @@ export interface PiAiCompatProfile {
+   supportsStrictMode?: boolean
+   /** Prompt-cache marker convention; `openai-completions`. */
+   cacheControlFormat?: NonNullable<OpenAICompletionsCompat['cacheControlFormat']>
++  /**
++   * Whether a request carrying a session id rides session-affinity transport
++   * headers, spelled by {@link sessionAffinityFormat}; `openai-completions`.
++   * The session id is the harness conversation's own `GenerateOptions`-level
++   * identity — a private gateway can key request routing or its own conversation
++   * records on it. A request without a session id sends no affinity header, and
++   * a profile naming `cacheRetention: none` sends none either, because pi-ai
++   * treats the id as prompt-cache state and drops it with the cache.
++   */
++  sendSessionAffinityHeaders?: boolean
++  /**
++   * Session-affinity header spellings; `openai-completions`, read only when
++   * {@link sendSessionAffinityHeaders} is set. `openrouter` sends
++   * `x-session-id`; `openai` sends `session_id` plus `x-client-request-id`
++   * and `x-session-affinity`; `openai-nosession` sends that pair without
++   * `session_id`. The prompt-cache `prompt_cache_key` body field is
++   * cache-retention business and follows its own rules, not this switch.
++   */
++  sessionAffinityFormat?: NonNullable<OpenAICompletionsCompat['sessionAffinityFormat']>
+   /**
+    * Whether the endpoint accepts long prompt-cache retention;
+    * `openai-completions`, the three Responses protocols, `anthropic-messages`.
+diff --git a/packages/llm/llm-pi-ai/src/config.ts b/packages/llm/llm-pi-ai/src/config.ts
+index 8da589cc39..868911d1e3 100644
+--- a/packages/llm/llm-pi-ai/src/config.ts
++++ b/packages/llm/llm-pi-ai/src/config.ts
+@@ -27,6 +27,7 @@ import {
+   MAX_TOKENS_FIELDS,
+   MODALITIES,
+   resolveRouteModels,
++  SESSION_AFFINITY_FORMATS,
+   SUPPORTED_THINKING_FORMATS,
+   THINKING_LEVELS,
+ } from './catalog.ts'
+@@ -263,6 +264,8 @@ const compatProfile: z<PiAiCompatProfile> = z.object({
+   supportsThinkingTokenBudget: z.boolean(),
+   supportsStrictMode: z.boolean(),
+   cacheControlFormat: z.union(CACHE_CONTROL_FORMATS),
++  sendSessionAffinityHeaders: z.boolean(),
++  sessionAffinityFormat: z.union(SESSION_AFFINITY_FORMATS),
+   supportsLongCacheRetention: z.boolean(),
+   supportsEagerToolInputStreaming: z.boolean(),
+   supportsCacheControlOnTools: z.boolean(),
+diff --git a/packages/llm/llm-pi-ai/tests/catalog.spec.ts b/packages/llm/llm-pi-ai/tests/catalog.spec.ts
+index 83cee8e239..030c5569d4 100644
+--- a/packages/llm/llm-pi-ai/tests/catalog.spec.ts
++++ b/packages/llm/llm-pi-ai/tests/catalog.spec.ts
+@@ -779,6 +779,39 @@ describe('compat switches', () => {
+     expect(models.get('dialect-odd')?.compat).toEqual({ thinkingFormat: 'openai', supportsReasoningEffort: false })
+   })
+ 
++  it('offers the session-affinity switches to a hand-declared completions route', () => {
++    const models = modelsOf({
++      'acme-gateway': {
++        api: 'openai-completions',
++        baseURL: 'https://acme.test',
++        compat: { sendSessionAffinityHeaders: true, sessionAffinityFormat: 'openrouter' },
++        models: [
++          { id: 'acme-a' },
++          { id: 'acme-b', compat: { sessionAffinityFormat: 'openai-nosession' } },
++        ],
++      },
++    }, 'acme-gateway')
++
++    expect(models.get('acme-a')?.compat).toEqual({ sendSessionAffinityHeaders: true, sessionAffinityFormat: 'openrouter' })
++    expect(models.get('acme-b')?.compat).toEqual({ sendSessionAffinityHeaders: true, sessionAffinityFormat: 'openai-nosession' })
++  })
++
++  it('refuses an affinity switch on a model whose protocol does not take it', () => {
++    // The completions-only offer keeps anthropic and Responses models out:
++    // a switch they cannot read is refused where it is written, not dropped.
++    expect(() => resolveProfiles({
++      anthropic: {
++        models: [{ id: 'claude-sonnet-4-5', compat: { sendSessionAffinityHeaders: true } as never }],
++      },
++    })).toThrow(/its api is "anthropic-messages", which does not take it.*exists on openai-completions/s)
++  })
++
++  it('refuses a route affinity switch no model on the route can take', () => {
++    expect(() => resolveProfiles({
++      anthropic: { compat: { sendSessionAffinityHeaders: true } as never },
++    })).toThrow(/no model on the route speaks a protocol that takes it.*exists on openai-completions/s)
++  })
++
+   it('merges the switches over the catalog entry’s own compat instead of replacing it', () => {
+     const [catalogModel] = getBuiltinModels('deepseek')
+     if (catalogModel === undefined) throw new Error('the installed catalog ships no deepseek model')
+diff --git a/packages/llm/llm-pi-ai/tests/session-affinity.spec.ts b/packages/llm/llm-pi-ai/tests/session-affinity.spec.ts
+new file mode 100644
+index 0000000000..7fd87574f6
+--- /dev/null
++++ b/packages/llm/llm-pi-ai/tests/session-affinity.spec.ts
+@@ -0,0 +1,131 @@
++import { afterEach, describe, expect, it, vi } from 'vitest'
++import { Context } from '@deepseek-ai/cordis'
++import LlmRuntime from '@deepseek-ai/dsh-llm'
++import * as LlmPiAi from '@deepseek-ai/dsh-llm-pi-ai'
++import { assemble } from './assemble.ts'
++import { closeMockServers, mockServer, textEvents } from './mock-server.ts'
++
++// The affinity headers are transport metadata: this spec asserts the real HTTP
++// wire (the mock server records every received header), not an intermediate
++// options object, and it pins behavior for the session id the loop stamps —
++// stable within one conversation, distinct across conversations, absent when
++// the request carries none.
++
++afterEach(async () => {
++  vi.unstubAllEnvs()
++  await closeMockServers()
++})
++
++const KEY_ENV = 'PI_TEST_KEY'
++
++/** A complete hand-declared completions route, with the switches under test. */
++function profile(baseURL: string, overrides: Record<string, unknown> = {}): LlmPiAi.Config {
++  return {
++    providers: {
++      'acme-gateway': {
++        apiKeyEnv: KEY_ENV,
++        displayName: 'Acme Gateway',
++        api: 'openai-completions',
++        baseURL,
++        models: [{ id: 'acme-large', name: 'Acme Large', contextWindow: 65_536, maxTokens: 4096 }],
++        ...overrides,
++      },
++    },
++  }
++}
++
++async function harness(config: LlmPiAi.Config): Promise<Context> {
++  vi.stubEnv(KEY_ENV, 'test-key')
++  const ctx = new Context()
++  await ctx.plugin(LlmRuntime)
++  await ctx.plugin(LlmPiAi, config)
++  return ctx
++}
++
++async function stream(ctx: Context, sessionId: string | undefined): Promise<void> {
++  await assemble(ctx, {
++    provider: 'acme-gateway',
++    model: 'acme-large',
++    messages: [],
++    ...sessionId === undefined ? {} : { sessionId: sessionId as never },
++  })
++}
++
++describe('session affinity headers', () => {
++  it('keeps one session on one id across its requests', async () => {
++    const server = await mockServer([{ events: textEvents }, { events: textEvents }])
++    const ctx = await harness(profile(server.url, {
++      compat: { sendSessionAffinityHeaders: true, sessionAffinityFormat: 'openrouter' },
++    }))
++    await stream(ctx, 'session-AAA')
++    await stream(ctx, 'session-AAA')
++    expect(server.headers[0]?.['x-session-id']).toBe('session-AAA')
++    expect(server.headers[1]?.['x-session-id']).toBe('session-AAA')
++  })
++
++  it('separates two sessions by their ids', async () => {
++    const server = await mockServer([{ events: textEvents }, { events: textEvents }])
++    const ctx = await harness(profile(server.url, {
++      compat: { sendSessionAffinityHeaders: true, sessionAffinityFormat: 'openrouter' },
++    }))
++    await stream(ctx, 'session-AAA')
++    await stream(ctx, 'session-BBB')
++    expect(server.headers[0]?.['x-session-id']).toBe('session-AAA')
++    expect(server.headers[1]?.['x-session-id']).toBe('session-BBB')
++  })
++
++  it('pins the openai format spellings', async () => {
++    const server = await mockServer([{ events: textEvents }])
++    const ctx = await harness(profile(server.url, {
++      compat: { sendSessionAffinityHeaders: true, sessionAffinityFormat: 'openai' },
++    }))
++    await stream(ctx, 'session-AAA')
++    expect(server.headers[0]?.['session_id']).toBe('session-AAA')
++    expect(server.headers[0]?.['x-client-request-id']).toBe('session-AAA')
++    expect(server.headers[0]?.['x-session-affinity']).toBe('session-AAA')
++    expect(server.headers[0]?.['x-session-id']).toBeUndefined()
++  })
++
++  it('sends no affinity header when the request carries no session id', async () => {
++    const server = await mockServer([{ events: textEvents }])
++    const ctx = await harness(profile(server.url, {
++      compat: { sendSessionAffinityHeaders: true, sessionAffinityFormat: 'openrouter' },
++    }))
++    await stream(ctx, undefined)
++    expect(server.headers[0]?.['x-session-id']).toBeUndefined()
++    expect(server.requests[0]).not.toHaveProperty('prompt_cache_key')
++  })
++
++  it('sends no affinity header when the profile disables cache retention', async () => {
++    // pi-ai treats the session id as prompt-cache state, so a cacheRetention
++    // of none drops it before the affinity headers are built. This is the
++    // documented coupling, pinned here so a pi-ai upgrade cannot change it
++    // silently.
++    const server = await mockServer([{ events: textEvents }])
++    const ctx = await harness(profile(server.url, {
++      cacheRetention: 'none',
++      compat: { sendSessionAffinityHeaders: true, sessionAffinityFormat: 'openrouter' },
++    }))
++    await stream(ctx, 'session-AAA')
++    expect(server.headers[0]?.['x-session-id']).toBeUndefined()
++  })
++
++  it('lets an explicit profile header win the collision', async () => {
++    const server = await mockServer([{ events: textEvents }])
++    const ctx = await harness(profile(server.url, {
++      headers: { 'x-session-id': 'static-id' },
++      compat: { sendSessionAffinityHeaders: true, sessionAffinityFormat: 'openrouter' },
++    }))
++    await stream(ctx, 'session-AAA')
++    expect(server.headers[0]?.['x-session-id']).toBe('static-id')
++  })
++
++  it('leaves a provider that did not opt in untouched', async () => {
++    const server = await mockServer([{ events: textEvents }])
++    const ctx = await harness(profile(server.url))
++    await stream(ctx, 'session-AAA')
++    expect(server.headers[0]?.['x-session-id']).toBeUndefined()
++    expect(server.headers[0]?.['x-client-request-id']).toBeUndefined()
++    expect(server.headers[0]?.['x-session-affinity']).toBeUndefined()
++  })
++})
+-- 
+2.39.5
+
