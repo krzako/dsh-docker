@@ -103,6 +103,23 @@ test("recognizes Open WebUI backend requests by its aiohttp user agent", () => {
     );
 });
 
+test("keys a DeepSeek Harness conversation from its transport session header", () => {
+    const result = toCanonicalRequest(
+        incoming({ "x-proxy-source": "deepseek-harness", "x-session-id": "session-7" }),
+        request(),
+    );
+    assert.equal(result.source, "deepseek-harness");
+    assert.deepEqual(result.external, { deepseek_session_id: "session-7" });
+});
+
+test("prefers DeepSeek Harness body metadata over the transport session header", () => {
+    const result = toCanonicalRequest(
+        incoming({ "x-proxy-source": "deepseek-harness", "x-session-id": "header-session" }),
+        request({ metadata: { session_id: "body-session" } }),
+    );
+    assert.deepEqual(result.external, { deepseek_session_id: "body-session" });
+});
+
 test("keeps tool calls and tool results in the serialized conversation", () => {
     const result = buildCopilotInput(
         request({

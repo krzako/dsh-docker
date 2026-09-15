@@ -37,7 +37,7 @@ the URL does not carry a session identifier.
 | Source | Main conversation ID | Auxiliary IDs | Message ID |
 |---|---|---|---|
 | OpenCode | `session_id` / `x-session-id` | `x-session-affinity` | `message_id` |
-| DeepSeek Harness | `conversation_id`, `session_id`, `thread_id` | `run_id`, `request_id` | `message_id` |
+| DeepSeek Harness | `conversation_id`, `session_id`, `thread_id`, `x-session-id` (header fallback) | `run_id`, `request_id` | `message_id` |
 | Open WebUI | `chat_id` | `session_id` | `message_id` |
 | Proxy | `conversation_id` | external IDs | generated request/message records |
 
@@ -51,7 +51,10 @@ OpenAI-compatible assistant response containing `Copilot Proxy: Unable to recogn
 Open WebUI requests without an explicit chat/session identifier are recognized by
 the observed backend marker `Python/... aiohttp/...`; explicit source and ID fields
 always take precedence.
-
+A DeepSeek Harness request without body metadata still keys its conversation from the
+`x-session-id` transport header (body metadata wins when both are present), which is
+what the Harness `llm-pi-ai` provider sends once its session-affinity compat is enabled;
+send `x-proxy-source: deepseek-harness` so the header is not read as the OpenCode one.
 The durable JSON store defaults to `/home/node/.copilot/proxy-conversations.json` and
 can be changed with `COPILOT_PROXY_CONVERSATION_STORE`. Incoming ordered `messages` are the
 request context and are recorded once per request. The assistant message is appended

@@ -214,6 +214,11 @@ describe('first seed over an existing document', () => {
     // copilot_proxy provider added whole.
     const copilot_proxy = settings['llm-pi-ai'].providers.copilot_proxy
     assert.equal(copilot_proxy.baseURL, 'http://copilot-proxy:9091/v1')
+    assert.deepEqual(copilot_proxy.headers, { 'x-proxy-source': 'deepseek-harness' })
+    assert.deepEqual(copilot_proxy.compat, {
+      sendSessionAffinityHeaders: true,
+      sessionAffinityFormat: 'openrouter',
+    })
     assert.equal(copilot_proxy.models.length, SEED['llm-pi-ai'].providers.copilot_proxy.models.length)
     // The commented retryPolicy block was transferred and stays a comment.
     assert.match(text, /^ *# *retryPolicy:$/m)
@@ -338,7 +343,12 @@ describe('runs after the flag exists', () => {
     assert.equal(result.firstSeed, false)
     assert.equal(result.flagCreated, false)
     assert.equal(await flagExists(), true)
-    assert.deepEqual(yaml.parse(await readSettings()), SEED_NO_KEY)
+    const expected = structuredClone(SEED_NO_KEY)
+    // Its provider flag proves the credential was already persisted, so a
+    // deleted settings document restores the route without needing the secret
+    // to return to the process environment.
+    expected['llm-pi-ai'].providers.copilot_proxy = seededCopilot()
+    assert.deepEqual(yaml.parse(await readSettings()), expected)
   })
 })
 
@@ -535,6 +545,26 @@ describe('env-gated copilot provider', () => {
     assert.equal(result.changed, false)
     const settings = yaml.parse(await readSettings())
     assert.deepEqual(settings['llm-pi-ai'].providers.copilot_proxy, seededCopilot())
+  })
+
+  it('updates a seeded copilot provider after its key leaves the environment', async () => {
+    await writeSettings(EXISTING_SETTINGS)
+    await runSeed({ env: COPILOT_KEY })
+
+    let text = await readSettings()
+    text = text.replace(/      headers:\n        x-proxy-source: deepseek-harness\n/, '')
+    text = text.replace(/      compat:\n        sendSessionAffinityHeaders: true\n        sessionAffinityFormat: openrouter\n/, '')
+    await writeSettings(text)
+
+    const result = await runSeed({ env: {} })
+
+    assert.equal(result.changed, true)
+    const copilot = yaml.parse(await readSettings())['llm-pi-ai'].providers.copilot_proxy
+    assert.deepEqual(copilot.headers, { 'x-proxy-source': 'deepseek-harness' })
+    assert.deepEqual(copilot.compat, {
+      sendSessionAffinityHeaders: true,
+      sessionAffinityFormat: 'openrouter',
+    })
   })
 })
 
