@@ -25,12 +25,12 @@ The proxy deliberately runs the SDK in `mode: "empty"` and exposes only tools de
 
 ## Important compatibility note
 
-Copilot SDK is an agent/session API rather than a raw OpenAI Chat Completions endpoint. The proxy therefore serializes the supplied OpenAI conversation history into a stable transcript for each request. This keeps the HTTP interface OpenAI-compatible and lets ordinary OpenAI clients work, but it is not byte-for-byte equivalent to calling OpenAI's API directly.
+Copilot SDK is an agent/session API rather than a raw OpenAI Chat Completions endpoint. The proxy serializes the supplied OpenAI conversation history into a stable transcript on the first request of a conversation, then sends only new messages on later requests to the same Copilot session. This keeps the HTTP interface OpenAI-compatible and lets ordinary OpenAI clients work, but it is not byte-for-byte equivalent to calling OpenAI's API directly.
 
 ## Client identity and conversation history
 
 The proxy currently exposes one normalized input endpoint, `POST /v1/chat/completions`.
-The source adapter selects the client from `x-proxy-source` or the identifiers below.
+The source adapter selects the client from `x-proxy-source` or the identifiers below. Each source has a separate adapter under `src/conversations/sources/` and maps its identifiers into one canonical conversation model.
 OpenCode native URL routing is not implemented; use `x-proxy-source: opencode` when
 the URL does not carry a session identifier.
 
@@ -60,6 +60,16 @@ can be changed with `COPILOT_PROXY_CONVERSATION_STORE`. Incoming ordered `messag
 request context and are recorded once per request. The assistant message is appended
 only after Copilot completes successfully. Tool calls and tool results remain
 structured OpenAI messages; they are not converted to ordinary text.
+The store also records the SDK session ID, last successful use, and hashes of the
+messages already sent to that session. A matching extension of the history resumes
+the session and sends only new messages. Edited/truncated history, a different model,
+or changed session configuration starts a fresh session to avoid mixing contexts.
+Requests to one conversation run sequentially; distinct conversations can run in
+parallel. An interrupted or failed turn invalidates its session so a subsequent
+request starts from the complete client-supplied history.
+SDK session mappings idle for more than 14 days are removed, and their matching SDK
+sessions are deleted. Cleanup runs at startup and hourly; failed deletions remain
+queued for retry. The proxy's conversation/request log is retained separately.
 `COPILOT_PROXY_MAX_CONTEXT_MESSAGES` (default `2000`) rejects oversized contexts rather than
 silently dropping messages. Retries with the same `x-request-id` or `message_id` are
 deduplicated.
@@ -67,12 +77,14 @@ deduplicated.
 ## Streaming and Copilot boundary
 
 The Copilot-specific adapter is `src/copilot/CopilotGateway.ts`. It uses the installed
-`@github/copilot-sdk` runtime (`CopilotClient`, `createSession`, `session.send`, and
-session events); no undocumented Copilot HTTP protocol or client conversation IDs are
-sent upstream. The proxy emits OpenAI-compatible SSE chunks because the SDK event
+`@github/copilot-sdk` runtime (`CopilotClient`, `createSession`, `resumeSession`,
+`deleteSession`, `session.send`, and session events); client conversation IDs are
+mapped to SDK-generated session IDs, not sent upstream directly. The proxy emits OpenAI-compatible SSE chunks because the SDK event
 stream is not OpenAI SSE. It preserves delta order, sends a final `finish_reason`,
 optionally sends usage, then `[DONE]`. Client disconnects abort the Copilot session
 and mark the request `interrupted`.
+Native session reuse lets Copilot preserve context and makes prompt-cache reuse possible;
+it does not guarantee a cache hit. Check `copilot_usage.cache_read_tokens` to measure it.
 
 Tool calls are intentionally *delegated* to the OpenAI client: a Copilot custom tool handler records the requested function call and immediately aborts that Copilot turn without executing the real tool. The caller (DSH, another agent harness, etc.) executes it and sends the tool result in the next Chat Completions request. This avoids giving Copilot access to the harness's actual tools.
 

@@ -3,6 +3,7 @@ import http, { type IncomingMessage, type ServerResponse } from "node:http";
 
 import { config } from "./config.js";
 import { CopilotGateway } from "./copilot/CopilotGateway.js";
+import { CopilotSessionManager } from "./copilot/CopilotSessionManager.js";
 import { toCanonicalRequest } from "./conversations/adapters.js";
 import { ConversationStore } from "./conversations/ConversationStore.js";
 import { identifySource, IdentifierConflictError } from "./conversations/identifiers.js";
@@ -13,6 +14,7 @@ import type { ProxyToolCall, ProxyUsage } from "./types/openai.js";
 
 const gateway = new CopilotGateway();
 const conversations = new ConversationStore();
+const sessions = new CopilotSessionManager(gateway, conversations);
 
 function json(res: ServerResponse, status: number, payload: unknown): void {
     const body = JSON.stringify(payload);
@@ -222,24 +224,7 @@ async function handleChat(req: IncomingMessage, res: ServerResponse): Promise<vo
 
     if (!request.stream) {
         try {
-            const result = await gateway.complete(request, {}, controller.signal);
-            await conversations.appendAssistant(canonical.conversationId, {
-                role: "assistant",
-                content: result.content || null,
-                ...(result.reasoningContent ? { reasoning_content: result.reasoningContent } : {}),
-                ...(result.toolCalls.length > 0
-                    ? {
-                          tool_calls: result.toolCalls.map((call) => ({
-                              id: call.id,
-                              type: "function" as const,
-                              function: {
-                                  name: call.name,
-                                  arguments: JSON.stringify(call.arguments ?? {}),
-                              },
-                          })),
-                      }
-                    : {}),
-            });
+            const result = await sessions.complete(canonical.conversationId, request, {}, controller.signal);
             await conversations.completeRequest(canonical.requestId, "completed");
             const responseBody = {
                 id,
@@ -307,7 +292,8 @@ async function handleChat(req: IncomingMessage, res: ServerResponse): Promise<vo
     };
 
     try {
-        const result = await gateway.complete(
+        const result = await sessions.complete(
+            canonical.conversationId,
             request,
             {
                 onReasoningDelta: (text) => {
@@ -368,23 +354,6 @@ async function handleChat(req: IncomingMessage, res: ServerResponse): Promise<vo
             controller.signal,
         );
 
-        await conversations.appendAssistant(canonical.conversationId, {
-            role: "assistant",
-            content: result.content || null,
-            ...(result.reasoningContent ? { reasoning_content: result.reasoningContent } : {}),
-            ...(result.toolCalls.length > 0
-                ? {
-                      tool_calls: result.toolCalls.map((call) => ({
-                          id: call.id,
-                          type: "function" as const,
-                          function: {
-                              name: call.name,
-                              arguments: JSON.stringify(call.arguments ?? {}),
-                          },
-                      })),
-                  }
-                : {}),
-        });
         await conversations.completeRequest(canonical.requestId, "completed");
 
         ensureRole();
@@ -441,6 +410,7 @@ async function handleChat(req: IncomingMessage, res: ServerResponse): Promise<vo
 
 export async function startServer(): Promise<http.Server> {
     await gateway.start();
+    sessions.startRetention();
 
     const server = http.createServer(async (req, res) => {
         try {
@@ -497,6 +467,7 @@ export async function startServer(): Promise<http.Server> {
 
     const shutdown = async () => {
         server.close();
+        sessions.stopRetention();
         await gateway.stop();
     };
     process.once("SIGINT", () => void shutdown().finally(() => process.exit(0)));

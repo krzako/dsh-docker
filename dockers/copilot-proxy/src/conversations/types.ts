@@ -36,6 +36,15 @@ export type StoredConversation = {
     updatedAt: string;
     externalIds: ExternalIdentifiers;
     messages: OpenAIChatMessage[];
+    copilotSession?: CopilotSessionBinding;
+};
+
+export type CopilotSessionBinding = {
+    id: string;
+    model: string;
+    configHash: string;
+    messageHashes: string[];
+    lastUsedAt: string;
 };
 
 export class ConversationConflictError extends Error {

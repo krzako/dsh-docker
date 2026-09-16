@@ -13,6 +13,7 @@ import { proxyLogger } from "../logging/ProxyLogger.js";
 import { buildCopilotInput } from "../openai/serializeMessages.js";
 import { AssistantResponse, type AssistantResponseCallbacks } from "./AssistantResponse.js";
 import { reasoningSummaryFor } from "./reasoningOptions.js";
+import type { SessionPlan } from "./sessionPlan.js";
 import type {
     ChatCompletionRequest,
     ProxyToolCall,
@@ -24,6 +25,8 @@ export type CompletionCallbacks = AssistantResponseCallbacks & {
 };
 
 export type CopilotCompletion = {
+    sessionId: string;
+    resumed: boolean;
     content: string;
     reasoningContent: string;
     toolCalls: ProxyToolCall[];
@@ -117,14 +120,21 @@ export class CopilotGateway {
         return this.#runningClient().rpc.account.getQuota({});
     }
 
+    async deleteSession(sessionId: string): Promise<void> {
+        await this.start();
+        await this.#runningClient().deleteSession(sessionId);
+    }
+
     async complete(
         request: ChatCompletionRequest,
         callbacks: CompletionCallbacks = {},
         signal?: AbortSignal,
+        plan?: SessionPlan,
     ): Promise<CopilotCompletion> {
+        if (signal?.aborted) throw new Error("Request aborted by client");
         await this.start();
 
-        const { systemMessage, prompt } = buildCopilotInput(request);
+        const { systemMessage, prompt: fullPrompt } = buildCopilotInput(request);
         const toolCalls: ProxyToolCall[] = [];
         const assistant = new AssistantResponse(callbacks);
         let providerFinishReason: string | undefined;
@@ -183,7 +193,7 @@ export class CopilotGateway {
 
         // mode:"empty" intentionally provides no ambient Copilot CLI tools/skills/MCP.
         // availableTools is mandatory in empty mode, including the [] case.
-        const session = await this.#runningClient().createSession({
+        const sessionConfig = {
             model: request.model,
             reasoningSummary: reasoningSummaryFor(request.reasoning_effort),
             ...(request.reasoning_effort
@@ -194,14 +204,36 @@ export class CopilotGateway {
                   }
                 : {}),
             streaming: request.stream === true,
-            systemMessage: { mode: "replace", content: systemMessage },
+            systemMessage: { mode: "replace" as const, content: systemMessage },
             availableTools: tools.length > 0 ? ["custom:*"] : [],
             tools,
             infiniteSessions: { enabled: false },
             memory: { enabled: false },
             workingDirectory,
             enableConfigDiscovery: false,
-        });
+        };
+        let session: CopilotSession;
+        let resumed = false;
+        if (plan?.resumeId) {
+            try {
+                session = await this.#runningClient().resumeSession(plan.resumeId, sessionConfig);
+                resumed = true;
+            } catch (error) {
+                const message = error instanceof Error ? error.message : String(error);
+                if (!/session.*(not found|does not exist|unknown)/i.test(message)) throw error;
+                session = await this.#runningClient().createSession(sessionConfig);
+            }
+        } else {
+            session = await this.#runningClient().createSession(sessionConfig);
+        }
+        if (signal?.aborted) {
+            await session.disconnect().catch(() => undefined);
+            await this.#runningClient().deleteSession(session.sessionId).catch(() => undefined);
+            throw new Error("Request aborted by client");
+        }
+        const prompt = resumed && plan
+            ? buildCopilotInput({ ...request, messages: plan.deltaMessages }).prompt
+            : fullPrompt;
         activeSession = session;
 
         let aborted = false;
@@ -211,6 +243,7 @@ export class CopilotGateway {
         };
         signal?.addEventListener("abort", abort, { once: true });
 
+        let completed = false;
         try {
             await new Promise<void>((resolve, reject) => {
                 let settled = false;
@@ -277,7 +310,9 @@ export class CopilotGateway {
                 // Token usage events above remain usable even if accumulated metrics are unavailable.
             }
 
-            return {
+            const result: CopilotCompletion = {
+                sessionId: session.sessionId,
+                resumed,
                 content: assistant.content,
                 reasoningContent: assistant.reasoningContent,
                 toolCalls,
@@ -285,9 +320,14 @@ export class CopilotGateway {
                 finishReason: mapFinishReason(providerFinishReason, toolCalls.length > 0),
                 ...(actualModel ? { actualModel } : {}),
             };
+            completed = true;
+            return result;
         } finally {
             signal?.removeEventListener("abort", abort);
             await session.disconnect().catch(() => undefined);
+            if (!completed) {
+                await this.#runningClient().deleteSession(session.sessionId).catch(() => undefined);
+            }
         }
     }
 }

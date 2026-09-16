@@ -7,6 +7,7 @@ import { newConversationId } from "./identifiers.js";
 import {
     ConversationConflictError,
     type CanonicalRequest,
+    type CopilotSessionBinding,
     type ExternalIdentifiers,
     type ProxySource,
     type StoredConversation,
@@ -14,6 +15,7 @@ import {
 
 type StoreFile = {
     conversations: StoredConversation[];
+    pendingSessionDeletes?: string[];
     requests: Record<
         string,
         {
@@ -31,8 +33,16 @@ function now(): string {
     return new Date().toISOString();
 }
 
-function externalEntries(external: ExternalIdentifiers): Array<[string, string]> {
-    return Object.entries(external).filter((entry): entry is [string, string] => Boolean(entry[1]));
+function identityEntry(source: ProxySource, external: ExternalIdentifiers): [keyof ExternalIdentifiers, string] | undefined {
+    const keys: Array<keyof ExternalIdentifiers> = source === "opencode"
+        ? ["opencode_session_id"]
+        : source === "deepseek-harness"
+            ? ["deepseek_conversation_id", "deepseek_session_id", "deepseek_thread_id"]
+            : ["openwebui_chat_id", "openwebui_session_id"];
+    for (const key of keys) {
+        if (external[key]) return [key, external[key]];
+    }
+    return undefined;
 }
 
 export class ConversationStore {
@@ -107,10 +117,11 @@ export class ConversationStore {
                 }
             }
             const matches = new Set<string>();
+            const identity = identityEntry(source, external);
             for (const conversation of data.conversations) {
                 if (conversation.source !== source || conversation.userId !== userId) continue;
-                const ids = externalEntries(conversation.externalIds);
-                if (ids.some(([key, value]) => external[key as keyof ExternalIdentifiers] === value)) {
+                const storedIdentity = identityEntry(source, conversation.externalIds);
+                if (identity && storedIdentity && identity[0] === storedIdentity[0] && identity[1] === storedIdentity[1]) {
                     matches.add(conversation.id);
                 }
                 if (requestedId && conversation.id === requestedId) matches.add(conversation.id);
@@ -184,13 +195,96 @@ export class ConversationStore {
         });
     }
 
-    async appendAssistant(conversationId: string, message: OpenAIChatMessage): Promise<void> {
+    async appendAssistant(
+        conversationId: string,
+        message: OpenAIChatMessage,
+        binding?: CopilotSessionBinding,
+        inputMessages?: OpenAIChatMessage[],
+    ): Promise<void> {
         return this.#exclusive(async () => {
             const data = await this.#data();
             const conversation = data.conversations.find((item) => item.id === conversationId);
             if (!conversation) throw new Error(`Conversation not found: ${conversationId}`);
+            if (inputMessages) conversation.messages = [...inputMessages];
             conversation.messages.push(message);
+            if (binding) {
+                const previousId = conversation.copilotSession?.id;
+                if (previousId && previousId !== binding.id) {
+                    data.pendingSessionDeletes ??= [];
+                    if (!data.pendingSessionDeletes.includes(previousId)) data.pendingSessionDeletes.push(previousId);
+                }
+                conversation.copilotSession = binding;
+            }
             conversation.updatedAt = now();
+            await this.#persist(data);
+        });
+    }
+
+    async getCopilotSession(conversationId: string): Promise<CopilotSessionBinding | undefined> {
+        return this.#exclusive(async () => {
+            const data = await this.#data();
+            const conversation = data.conversations.find((item) => item.id === conversationId);
+            if (!conversation) throw new Error(`Conversation not found: ${conversationId}`);
+            const binding = conversation.copilotSession;
+            return binding ? { ...binding, messageHashes: [...binding.messageHashes] } : undefined;
+        });
+    }
+
+    async setCopilotSession(conversationId: string, binding: CopilotSessionBinding): Promise<void> {
+        return this.#exclusive(async () => {
+            const data = await this.#data();
+            const conversation = data.conversations.find((item) => item.id === conversationId);
+            if (!conversation) throw new Error(`Conversation not found: ${conversationId}`);
+            conversation.copilotSession = binding;
+            conversation.updatedAt = now();
+            await this.#persist(data);
+        });
+    }
+
+    async clearCopilotSession(conversationId: string): Promise<string | undefined> {
+        return this.#exclusive(async () => {
+            const data = await this.#data();
+            const conversation = data.conversations.find((item) => item.id === conversationId);
+            if (!conversation?.copilotSession) return undefined;
+            const id = conversation.copilotSession.id;
+            delete conversation.copilotSession;
+            data.pendingSessionDeletes ??= [];
+            if (!data.pendingSessionDeletes.includes(id)) data.pendingSessionDeletes.push(id);
+            await this.#persist(data);
+            return id;
+        });
+    }
+
+    async takeExpiredCopilotSessions(cutoff: Date, activeConversationIds: ReadonlySet<string> = new Set()): Promise<string[]> {
+        return this.#exclusive(async () => {
+            const data = await this.#data();
+            const ids: string[] = [];
+            for (const conversation of data.conversations) {
+                const binding = conversation.copilotSession;
+                if (!binding || activeConversationIds.has(conversation.id)) continue;
+                if (Date.parse(binding.lastUsedAt) > cutoff.getTime()) continue;
+                ids.push(binding.id);
+                delete conversation.copilotSession;
+            }
+            if (ids.length > 0) {
+                data.pendingSessionDeletes ??= [];
+                for (const id of ids) {
+                    if (!data.pendingSessionDeletes.includes(id)) data.pendingSessionDeletes.push(id);
+                }
+                await this.#persist(data);
+            }
+            return ids;
+        });
+    }
+
+    async pendingSessionDeletes(): Promise<string[]> {
+        return this.#exclusive(async () => [...((await this.#data()).pendingSessionDeletes ?? [])]);
+    }
+
+    async acknowledgeSessionDelete(id: string): Promise<void> {
+        return this.#exclusive(async () => {
+            const data = await this.#data();
+            data.pendingSessionDeletes = (data.pendingSessionDeletes ?? []).filter((item) => item !== id);
             await this.#persist(data);
         });
     }

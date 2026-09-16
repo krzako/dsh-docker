@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, readFile } from "node:fs/promises";
+import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -224,4 +224,60 @@ test("deduplicates a repeated external message id", async () => {
     };
     assert.equal(await store.recordRequest(canonical), "new");
     assert.equal(await store.recordRequest({ ...canonical, requestId: "req-2" }), "duplicate");
+});
+
+test("isolates chats sharing an auxiliary session and migrates an old store", async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), "copilot-proxy-"));
+    const file = path.join(directory, "state.json");
+    await writeFile(file, JSON.stringify({ conversations: [], requests: {} }));
+    const store = new ConversationStore(file);
+    const first = await store.resolve("open-webui", undefined, {
+        openwebui_chat_id: "chat-a",
+        openwebui_session_id: "browser-1",
+    }, undefined);
+    const second = await store.resolve("open-webui", undefined, {
+        openwebui_chat_id: "chat-b",
+        openwebui_session_id: "browser-1",
+    }, undefined);
+    assert.notEqual(first, second);
+    assert.equal(await store.getCopilotSession(first), undefined);
+    await store.setCopilotSession(first, {
+        id: "copilot-session-a",
+        model: "test-model",
+        configHash: "config-1",
+        messageHashes: ["message-1"],
+        lastUsedAt: "2026-09-01T00:00:00.000Z",
+    });
+    const reopened = new ConversationStore(file);
+    assert.equal((await reopened.getCopilotSession(first))?.id, "copilot-session-a");
+    assert.equal(await reopened.getCopilotSession(second), undefined);
+});
+
+test("expires Copilot bindings without deleting conversation mappings", async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), "copilot-proxy-"));
+    const store = new ConversationStore(path.join(directory, "state.json"));
+    const oldId = await store.resolve("deepseek-harness", undefined, { deepseek_session_id: "old" }, undefined);
+    const liveId = await store.resolve("deepseek-harness", undefined, { deepseek_session_id: "live" }, undefined);
+    for (const [conversationId, lastUsedAt] of [
+        [oldId, "2026-08-01T00:00:00.000Z"],
+        [liveId, "2026-09-10T00:00:00.000Z"],
+    ] as const) {
+        await store.setCopilotSession(conversationId, {
+            id: `copilot-${conversationId}`,
+            model: "test-model",
+            configHash: "config",
+            messageHashes: [],
+            lastUsedAt,
+        });
+    }
+    assert.deepEqual(
+        await store.takeExpiredCopilotSessions(new Date("2026-09-01T00:00:00.000Z")),
+        [`copilot-${oldId}`],
+    );
+    assert.equal(await store.getCopilotSession(oldId), undefined);
+    assert.ok(await store.getCopilotSession(liveId));
+    assert.equal(
+        await store.resolve("deepseek-harness", undefined, { deepseek_session_id: "old" }, undefined),
+        oldId,
+    );
 });
