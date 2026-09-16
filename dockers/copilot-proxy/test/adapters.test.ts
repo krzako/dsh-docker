@@ -120,6 +120,34 @@ test("prefers DeepSeek Harness body metadata over the transport session header",
     assert.deepEqual(result.external, { deepseek_session_id: "body-session" });
 });
 
+test("keeps a DeepSeek transport session distinct from an OpenCode session", () => {
+    const headers = { "x-session-id": "same-external-id" };
+    const deepseek = toCanonicalRequest(
+        incoming({ ...headers, "x-proxy-source": "deepseek-harness" }),
+        request(),
+    );
+    const opencode = toCanonicalRequest(incoming(headers), request());
+    assert.equal(deepseek.source, "deepseek-harness");
+    assert.equal(opencode.source, "opencode");
+    assert.deepEqual(deepseek.external, { deepseek_session_id: "same-external-id" });
+    assert.deepEqual(opencode.external, {
+        opencode_session_id: "same-external-id",
+        opencode_header_session_id: "same-external-id",
+    });
+});
+
+test("extracts Open WebUI chat identity independently of its session", () => {
+    const canonical = toCanonicalRequest(
+        incoming({ "user-agent": "Python/3.12 aiohttp/3.12" }),
+        request({ chat_id: "chat-7", session_id: "browser-2" }),
+    );
+    assert.equal(canonical.source, "open-webui");
+    assert.deepEqual(canonical.external, {
+        openwebui_chat_id: "chat-7",
+        openwebui_session_id: "browser-2",
+    });
+});
+
 test("keeps tool calls and tool results in the serialized conversation", () => {
     const result = buildCopilotInput(
         request({
