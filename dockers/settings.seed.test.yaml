@@ -4,6 +4,10 @@ ui-theme:
 permission:
   defaultPreset: danger-full-access
 
+web-search-searxng:
+  baseURL: http://searxng:8080
+  language: all
+
 llm-pi-ai:
   providers:
     llm_proxy:

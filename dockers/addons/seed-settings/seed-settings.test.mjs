@@ -205,6 +205,10 @@ describe('first seed over an existing document', () => {
     assert.deepEqual(settings['permission'], SEED.permission)
     assert.deepEqual(settings['ui-theme'], SEED['ui-theme'])
     assert.deepEqual(settings['agent-presets'], SEED['agent-presets'])
+    assert.deepEqual(settings['web-search-searxng'], {
+      baseURL: 'http://searxng:8080',
+      language: 'all',
+    })
     // Always rules applied on the first seed too.
     assert.deepEqual(llm_proxy.defaultInput, ['text', 'image'])
     assert.deepEqual(llm_proxy.compat, SEED['llm-pi-ai'].providers.llm_proxy.compat)
@@ -312,6 +316,7 @@ describe('runs after the flag exists', () => {
     text = text.replace('    copilot_proxy:', '    my-own:\n      displayName: My Own\n      models:\n        - id: my-own-model\n    copilot_proxy:')
     text = text.replace('model: qwen3.8-27b', 'model: my-own-model')
     text = text.replace('preference: dark', 'preference: light')
+    text = text.replace('baseURL: http://searxng:8080', 'baseURL: http://custom-searxng:8080')
     await writeSettings(text)
 
     const result = await runSeed()
@@ -323,6 +328,8 @@ describe('runs after the flag exists', () => {
     assert.equal(llm_proxy.defaultContextWindow, 999)
     assert.equal(settings['agent-default-model'].model, 'my-own-model')
     assert.equal(settings['ui-theme'].preference, 'light')
+    assert.equal(settings['web-search-searxng'].baseURL, 'http://custom-searxng:8080')
+    assert.equal(settings['web-search-searxng'].language, 'all')
     // User-only provider and model survive.
     assert.deepEqual(settings['llm-pi-ai'].providers['my-own'].models, [{ id: 'my-own-model' }])
     assert.ok(llm_proxy.models.some((m) => m.id === 'qwen3.8-27b'))

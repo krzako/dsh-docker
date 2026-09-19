@@ -14,8 +14,8 @@
  *   - a seed provider's compat replaces the stored compat wholesale.
  * - Applied only while the global completion flag (.settings-seed-complete)
  *   does not exist yet (first seed):
- *   - the global sections agent-presets, agent-default-model, permission and
- *     ui-theme are replaced with the seed values,
+ *   - the global sections agent-presets, agent-default-model, permission,
+ *     ui-theme, and web-search-searxng are replaced with the seed values,
  *   - commented seed fragments (for example the commented retryPolicy block)
  *     are transferred into settings.yaml while staying comments.
  * - Applied only while the per-provider flag does not exist yet. Each flag
@@ -88,6 +88,7 @@ const FIRST_SEED_GLOBAL_SECTIONS = [
   'agent-default-model',
   'permission',
   'ui-theme',
+  'web-search-searxng',
 ]
 /** The global completion flag marks the first seed as done. */
 export const FLAG_NAME = '.settings-seed-complete'
