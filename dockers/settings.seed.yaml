@@ -49,6 +49,9 @@ llm-pi-ai:
           reasoningEfforts:
             off: "none"
             xhigh: "xhigh"
+        - id: bonsai-2-27b
+          name: bonsai-2-27b
+          contextWindow: 57344
 
     copilot_proxy:
       defaultInput: [text, image]
