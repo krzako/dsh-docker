@@ -39,6 +39,8 @@ services:
       # apply without rebuilding the image.
       - "./settings.seed.yaml:/opt/dsh-seed/settings.seed.yaml:ro"
 
+    # command: ["node", "proxy.mjs", "--log-all"]
+
     networks:
       - default
       - dsh_git
