@@ -1,0 +1,43 @@
+services:
+  dsh-git:
+    image: ${BRIDGE_IMAGE:-dsh-git:local}
+    container_name: ${BRIDGE_CONTAINER:-dsh-git}
+    build:
+      context: ./server
+
+    environment:
+      HOME: /tmp
+        
+    volumes:
+      - type: bind
+        source: "${REPOS_VOLUME_PATH:-./dsh-git-repos}"
+        target: /repos
+
+    ports:
+      - "127.0.0.1:${BRIDGE_PORT:-9418}:9418"
+
+    networks:
+      - dsh_git
+
+    read_only: true
+
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,noexec,size=16m
+
+    cap_drop:
+      - ALL
+
+    security_opt:
+      - no-new-privileges:true
+
+    init: true
+    restart: unless-stopped
+
+    labels:
+      com.dsh-git.managed: "true"
+      com.dsh-git.network: "${BRIDGE_NETWORK:-dsh_git}"
+      com.dsh-git.host-port: "${BRIDGE_PORT:-9418}"
+
+networks:
+  dsh_git:
+    name: ${BRIDGE_NETWORK:-dsh_git}

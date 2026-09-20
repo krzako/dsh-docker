@@ -1,0 +1,35 @@
+#!/bin/sh
+set -eu
+
+ZERO='0000000000000000000000000000000000000000'
+
+while read -r OLD NEW REF; do
+    echo "bridge: checking $REF"
+
+	case "$REF" in
+		refs/heads/*) ;;
+		*)
+			echo "REJECTED: only branch refs are allowed." >&2
+			exit 1
+			;;
+	esac
+
+    if [ "$NEW" = "$ZERO" ]; then
+        echo 'REJECTED: deleting refs is forbidden.' >&2
+        exit 1
+    fi
+
+    if [ "$OLD" != "$ZERO" ]; then
+        if ! git merge-base --is-ancestor "$OLD" "$NEW"; then
+            echo 'REJECTED: non-fast-forward / force push is forbidden.' >&2
+            exit 1
+        fi
+    fi
+
+    # Validate commits that are newly introduced to any reachable ref in this
+    # bare repository. Existing history (e.g. main and old commits from other
+    # authors) is intentionally not revalidated.
+    NEW_COMMITS="$(git rev-list "$NEW" --not --all)"
+done
+
+exit 0
