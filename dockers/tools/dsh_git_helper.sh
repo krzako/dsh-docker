@@ -25,9 +25,9 @@
 # Notes:
 # - An invalid repository or branch name prints a message and asks again
 #   (repository prompt) or returns to the option menu (branch prompts).
-# - Deleting uses the safe `git branch -d`, so unmerged branches are refused.
-# - The repository's HEAD branch is never deleted; in a bare repository Git
-#   would otherwise remove it and leave HEAD dangling.
+# - Deleting uses `git branch -D`, including for unmerged branches.
+# - Deleting the repository's HEAD branch first moves HEAD to another local
+#   branch. If no branch remains, HEAD points to an unborn master/main branch.
 # - Changes made directly inside the container bypass the pre-receive hook
 #   that guards pushes.
 
@@ -84,6 +84,32 @@ branch_exists() {
 
 head_branch() {
   git_cmd symbolic-ref --short -q HEAD || true
+}
+
+# Choose where a bare repository's symbolic HEAD should move before its current
+# branch is deleted. Prefer the conventional master/main names, then the first
+# remaining branch. With no remaining branch, return an unborn conventional
+# name different from the branch being removed.
+replacement_head_branch() {
+  local deleted="$1" candidate branches
+  for candidate in master main; do
+    if [[ "$candidate" != "$deleted" ]] && branch_exists "$candidate"; then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+  done
+  branches="$(git_cmd for-each-ref --sort=refname --format='%(refname:short)' refs/heads)"
+  while IFS= read -r candidate; do
+    if [[ -n "$candidate" && "$candidate" != "$deleted" ]]; then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+  done <<< "$branches"
+  if [[ "$deleted" == "master" ]]; then
+    printf '%s\n' main
+  else
+    printf '%s\n' master
+  fi
 }
 
 # Discover the bare repositories the container serves: direct children of
@@ -228,18 +254,26 @@ archive_branch() {
 }
 
 delete_branch() {
-  local branch head
+  local branch head replacement
   if ! branch="$(prompt_branch delete)"; then
     return 0
   fi
   head="$(head_branch)"
   if [[ -n "$head" && "$branch" == "$head" ]]; then
-    echo "Branch '$branch' is the repository's HEAD branch; refusing to delete it." >&2
-    return 0
+    replacement="$(replacement_head_branch "$branch")"
+    if ! git_cmd symbolic-ref HEAD "refs/heads/$replacement"; then
+      echo "Failed to move repository HEAD from '$branch' to '$replacement'; branch was not deleted." >&2
+      return 0
+    fi
+    echo "Repository HEAD moved from '$branch' to '$replacement'."
   fi
   if git_cmd branch -D "$branch"; then
     echo "Branch '$branch' deleted."
   else
+    if [[ -n "$head" && "$branch" == "$head" ]]; then
+      git_cmd symbolic-ref HEAD "refs/heads/$branch" || true
+      echo "Repository HEAD restored to '$branch'." >&2
+    fi
     echo "Branch '$branch' was not deleted (see the Git message above)." >&2
   fi
 }
