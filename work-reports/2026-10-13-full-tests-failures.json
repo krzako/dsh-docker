@@ -1,0 +1,2191 @@
+{
+  "forkCommit": "c736b18f0",
+  "run": {
+    "name": "nextest-run",
+    "tests": "19964",
+    "skipped": "0",
+    "failures": "416",
+    "errors": "0",
+    "uuid": "7149aca6-1627-44f0-b120-edd44dd6519a",
+    "timestamp": "2026-10-12T17:51:32.727+02:00",
+    "time": "870.015"
+  },
+  "summary": {
+    "passed": 19548,
+    "failed": 403,
+    "timedOut": 13,
+    "skippedByRepository": 42
+  },
+  "suites": [
+    {
+      "suite": "codex-app-server::all",
+      "tests": 1398,
+      "failures": [
+        {
+          "name": "suite::v2::analytics::multi_agent_v2_tools_emit_collaborator_analytics",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::analytics::multi_agent_v2_tools_emit_collaborator_analytics' (246947) panicked at app-server/tests/suite/v2/analytics.rs:385:10"
+        },
+        {
+          "name": "suite::v2::app_installed::installed_apps_thread_refresh_updates_live_tools_and_retains_them_on_failure",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::app_installed::installed_apps_thread_refresh_updates_live_tools_and_retains_them_on_failure' (253321) panicked at app-server/tests/suite/v2/app_installed.rs:281:5"
+        },
+        {
+          "name": "suite::v2::app_installed::installed_apps_threadless_refresh_updates_existing_thread_tools",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::app_installed::installed_apps_threadless_refresh_updates_existing_thread_tools' (253584) panicked at app-server/tests/suite/v2/app_installed.rs:158:13"
+        },
+        {
+          "name": "suite::v2::code_mode_host::app_server_shares_flag_selected_grpc_code_mode_host_across_threads",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::code_mode_host::app_server_shares_flag_selected_grpc_code_mode_host_across_threads' (276155) panicked at app-server/tests/suite/v2/code_mode_host.rs:333:9"
+        },
+        {
+          "name": "suite::logging::sqlite_log_metrics_exports_do_not_create_log_cycles",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::logging::sqlite_log_metrics_exports_do_not_create_log_cycles' (185533) panicked at app-server/tests/suite/logging.rs:430:9"
+        },
+        {
+          "name": "suite::v2::code_mode_host::app_server_prewarms_flag_selected_grpc_code_mode_host_before_first_turn",
+          "type": "test failure with exit code 101",
+          "message": "Error: code-mode host was not contacted before the first turn"
+        },
+        {
+          "name": "suite::v2::code_mode_host::code_mode_model_output_uses_structured_host_timing::exec_grpc_host_only",
+          "type": "test failure with exit code 101",
+          "message": "Error: timed out waiting for 1 JSON log event(s) named `codex.code_mode.host_timing`; captured stderr"
+        },
+        {
+          "name": "suite::v2::code_mode_host::code_mode_model_output_uses_structured_host_timing::exec_grpc_with_overhead",
+          "type": "test failure with exit code 101",
+          "message": "Error: timed out waiting for 1 JSON log event(s) named `codex.code_mode.host_timing`; captured stderr"
+        },
+        {
+          "name": "suite::v2::code_mode_host::code_mode_model_output_uses_structured_host_timing::exec_stdio_host_only",
+          "type": "test failure with exit code 101",
+          "message": "Error: timed out waiting for 1 JSON log event(s) named `codex.code_mode.host_timing`; captured stderr"
+        },
+        {
+          "name": "suite::v2::code_mode_host::code_mode_model_output_uses_structured_host_timing::exec_stdio_with_overhead",
+          "type": "test failure with exit code 101",
+          "message": "Error: timed out waiting for 1 JSON log event(s) named `codex.code_mode.host_timing`; captured stderr"
+        },
+        {
+          "name": "suite::v2::code_mode_host::code_mode_model_output_uses_structured_host_timing::wait_grpc_host_only",
+          "type": "test failure with exit code 101",
+          "message": "Error: timed out waiting for 1 JSON log event(s) named `codex.code_mode.host_timing`; captured stderr"
+        },
+        {
+          "name": "suite::v2::code_mode_host::code_mode_model_output_uses_structured_host_timing::wait_grpc_with_overhead",
+          "type": "test failure with exit code 101",
+          "message": "Error: timed out waiting for 1 JSON log event(s) named `codex.code_mode.host_timing`; captured stderr"
+        },
+        {
+          "name": "suite::v2::code_mode_host::code_mode_model_output_uses_structured_host_timing::wait_stdio_host_only",
+          "type": "test failure with exit code 101",
+          "message": "Error: timed out waiting for 1 JSON log event(s) named `codex.code_mode.host_timing`; captured stderr"
+        },
+        {
+          "name": "suite::v2::code_mode_host::code_mode_model_output_uses_structured_host_timing::wait_stdio_with_overhead",
+          "type": "test failure with exit code 101",
+          "message": "Error: timed out waiting for 1 JSON log event(s) named `codex.code_mode.host_timing`; captured stderr"
+        },
+        {
+          "name": "suite::v2::daemon_update_recovery::managed_force_shutdown_exits_with_blocked_rollout_writer",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::v2::executor_mcp::guardian_review_does_not_discover_executor_mcp",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::executor_mcp::guardian_review_does_not_discover_executor_mcp' (343190) panicked at app-server/tests/suite/v2/executor_mcp.rs:510:5"
+        },
+        {
+          "name": "suite::v2::executor_mcp::legacy_executor_skips_required_browser_and_keeps_host_owned_mcp",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::executor_mcp::legacy_executor_skips_required_browser_and_keeps_host_owned_mcp' (343352) panicked at app-server/tests/suite/v2/executor_mcp.rs:407:5"
+        },
+        {
+          "name": "suite::v2::executor_mcp::selected_executor_plugin_exposes_its_mcps_only_to_that_thread",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::executor_mcp::selected_executor_plugin_exposes_its_mcps_only_to_that_thread' (344121) panicked at app-server/tests/suite/v2/executor_mcp.rs:952:5"
+        },
+        {
+          "name": "suite::v2::executor_mcp::selected_executor_discovers_browser_mcp_with_executor_only_bearer_token",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::executor_mcp::selected_executor_discovers_browser_mcp_with_executor_only_bearer_token' (343487) panicked at app-server/tests/suite/v2/executor_mcp.rs:213:5"
+        },
+        {
+          "name": "suite::v2::executor_skills::restricted_executor_skill_can_read_permitted_reference",
+          "type": "test failure with exit code 101",
+          "message": "Error: expected value at line 1 column 1"
+        },
+        {
+          "name": "suite::v2::executor_skills::restricted_executor_skill_is_listed_only_when_permitted",
+          "type": "test failure with exit code 101",
+          "message": "Error: expected value at line 1 column 1"
+        },
+        {
+          "name": "suite::v2::executor_skills::selected_executor_root_exposes_plugin_skill_and_forwards_budget_warning",
+          "type": "test failure with exit code 101",
+          "message": "Error: expected value at line 1 column 1"
+        },
+        {
+          "name": "suite::v2::external_agent_config::external_agent_config_import_creates_session_rollouts",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::external_agent_config::external_agent_config_import_creates_session_rollouts' (365295) panicked at app-server/tests/suite/v2/external_agent_config.rs:1998:5"
+        },
+        {
+          "name": "suite::v2::executor_skills::explicit_executor_skill_can_read_referenced_file",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::v2::executor_skills::restricted_executor_skill_rejects_reference_until_permission_approved",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::v2::history_notes_extension::app_server_uses_configured_notes_backend_for_context_window_hints::native_failure_does_not_use_bridge",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::history_notes_extension::app_server_uses_configured_notes_backend_for_context_window_hints::native_failure_does_not_use_bridge' (376537) panicked at app-server/tests/suite/v2/history_notes_extension.rs:176:13"
+        },
+        {
+          "name": "suite::v2::history_notes_extension::app_server_uses_configured_notes_backend_for_context_window_hints::native_hint",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::history_notes_extension::app_server_uses_configured_notes_backend_for_context_window_hints::native_hint' (376615) panicked at app-server/tests/suite/v2/history_notes_extension.rs:176:13"
+        },
+        {
+          "name": "suite::v2::history_notes_extension::app_server_uses_configured_notes_backend_for_context_window_hints::no_notes",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::history_notes_extension::app_server_uses_configured_notes_backend_for_context_window_hints::no_notes' (377704) panicked at app-server/tests/suite/v2/history_notes_extension.rs:176:13"
+        },
+        {
+          "name": "suite::v2::history_notes_extension::history_notes_and_async_message_emit_control_tool_analytics",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::history_notes_extension::history_notes_and_async_message_emit_control_tool_analytics' (379755) panicked at app-server/tests/suite/v2/history_notes_extension.rs:393:14"
+        },
+        {
+          "name": "suite::v2::imagegen_extension::automatic_image_background_preserves_unknown_transparency",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::imagegen_extension::automatic_image_background_preserves_unknown_transparency' (385248) panicked at /home/krzako/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wiremock-0.6.5/src/mock_server/exposed_server.rs:367:17"
+        },
+        {
+          "name": "suite::v2::imagegen_extension::image_generation_usage_limit_preserves_correlated_failure_metadata",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::imagegen_extension::image_generation_usage_limit_preserves_correlated_failure_metadata' (385351) panicked at /home/krzako/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wiremock-0.6.5/src/mock_server/exposed_server.rs:367:17"
+        },
+        {
+          "name": "suite::v2::imagegen_extension::standalone_image_edit_uses_attached_model_visible_image",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::imagegen_extension::standalone_image_edit_uses_attached_model_visible_image' (385460) panicked at /home/krzako/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wiremock-0.6.5/src/mock_server/exposed_server.rs:367:17"
+        },
+        {
+          "name": "suite::v2::imagegen_extension::standalone_image_generation_is_exposed_in_code_mode_only",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::imagegen_extension::standalone_image_generation_is_exposed_in_code_mode_only' (423273) panicked at app-server/tests/suite/v2/imagegen_extension.rs:713:5"
+        },
+        {
+          "name": "suite::v2::imagegen_extension::standalone_image_generation_is_callable_from_code_mode_only",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::imagegen_extension::standalone_image_generation_is_callable_from_code_mode_only' (423101) panicked at app-server/tests/suite/v2/imagegen_extension.rs:780:5"
+        },
+        {
+          "name": "suite::v2::imagegen_extension::standalone_image_generation_failure_emits_terminal_item",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::imagegen_extension::standalone_image_generation_failure_emits_terminal_item' (422950) panicked at /home/krzako/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wiremock-0.6.5/src/mock_server/exposed_server.rs:367:17"
+        },
+        {
+          "name": "suite::v2::imagegen_extension::standalone_image_generation_returns_saved_path_hint_to_model",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::imagegen_extension::standalone_image_generation_returns_saved_path_hint_to_model' (427506) panicked at /home/krzako/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wiremock-0.6.5/src/mock_server/exposed_server.rs:367:17"
+        },
+        {
+          "name": "suite::v2::imagegen_extension::transparent_image_edit_preserves_metadata_and_recent_pathless_image",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::imagegen_extension::transparent_image_edit_preserves_metadata_and_recent_pathless_image' (427856) panicked at /home/krzako/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wiremock-0.6.5/src/mock_server/exposed_server.rs:367:17"
+        },
+        {
+          "name": "suite::v2::mcp_resource::plugin_metadata_refresh::signed_image_renewal_preserves_live_mcp_and_skills",
+          "type": "test failure with exit code 101",
+          "message": "Error: expected value at line 1 column 1"
+        },
+        {
+          "name": "suite::v2::mcp_resource::orchestrator_skill_can_read_referenced_resource_without_an_executor",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::mcp_resource::orchestrator_skill_can_read_referenced_resource_without_an_executor' (494608) panicked at app-server/tests/suite/v2/mcp_resource.rs:383:5"
+        },
+        {
+          "name": "suite::v2::daybreak_access::daybreak_access_respects_plugin_provenance::selected_model_and_direct_calls",
+          "type": "test timeout",
+          "message": null
+        },
+        {
+          "name": "suite::v2::mcp_resource::resume_revalidates_persisted_thread_after_config_load::git_metadata_and_project_assignment",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::mcp_resource::resume_revalidates_persisted_thread_after_config_load::git_metadata_and_project_assignment' (499476) panicked at app-server/tests/suite/v2/mcp_resource.rs:1064:18"
+        },
+        {
+          "name": "suite::v2::mcp_resource::resume_revalidates_persisted_thread_after_config_load::project_deletion",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::mcp_resource::resume_revalidates_persisted_thread_after_config_load::project_deletion' (499585) panicked at app-server/tests/suite/v2/mcp_resource.rs:1064:18"
+        },
+        {
+          "name": "suite::v2::mcp_resource_origin::widget_reads_survive_history_modes_compaction_restarts_and_app_only_visibility",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::mcp_resource_origin::widget_reads_survive_history_modes_compaction_restarts_and_app_only_visibility' (500036) panicked at app-server/tests/common/test_app_server.rs:1674:13"
+        },
+        {
+          "name": "suite::v2::imagegen_extension::transparent_image_preserves_output_metadata_and_persisted_history",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::imagegen_extension::transparent_image_preserves_output_metadata_and_persisted_history' (474170) panicked at /home/krzako/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wiremock-0.6.5/src/mock_server/exposed_server.rs:367:17"
+        },
+        {
+          "name": "suite::v2::mcp_server_elicitation::mcp_server_form_elicitation_round_trip",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::v2::mcp_server_elicitation::mcp_server_form_elicitation_round_trip_in_full_access",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::v2::mcp_server_elicitation::mcp_server_legacy_sep1034_elicitation_defaults_round_trip",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::v2::mcp_server_elicitation::mcp_server_strict_auto_review::app_default_reviewer_user",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::mcp_server_elicitation::mcp_server_strict_auto_review::app_default_reviewer_user' (528618) panicked at app-server/tests/suite/v2/mcp_server_elicitation.rs:965:14"
+        },
+        {
+          "name": "suite::v2::mcp_server_elicitation::mcp_server_strict_auto_review::app_reviewer_missing_call_id",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::mcp_server_elicitation::mcp_server_strict_auto_review::app_reviewer_missing_call_id' (530016) panicked at app-server/tests/suite/v2/mcp_server_elicitation.rs:965:14"
+        },
+        {
+          "name": "suite::v2::mcp_server_elicitation::mcp_server_strict_auto_review::app_reviewer_noncanonical_id",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::mcp_server_elicitation::mcp_server_strict_auto_review::app_reviewer_noncanonical_id' (530788) panicked at app-server/tests/suite/v2/mcp_server_elicitation.rs:965:14"
+        },
+        {
+          "name": "suite::v2::mcp_server_elicitation::mcp_server_strict_auto_review::app_reviewer_spoofed_action",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::mcp_server_elicitation::mcp_server_strict_auto_review::app_reviewer_spoofed_action' (531478) panicked at app-server/tests/suite/v2/mcp_server_elicitation.rs:965:14"
+        },
+        {
+          "name": "suite::v2::mcp_server_elicitation::mcp_server_strict_auto_review::app_reviewer_spoofed_id",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::mcp_server_elicitation::mcp_server_strict_auto_review::app_reviewer_spoofed_id' (532220) panicked at app-server/tests/suite/v2/mcp_server_elicitation.rs:965:14"
+        },
+        {
+          "name": "suite::v2::mcp_server_elicitation::mcp_server_openai_elicitation_form_round_trip",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::v2::mcp_server_elicitation::mcp_server_strict_auto_review::app_reviewer_user",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::mcp_server_elicitation::mcp_server_strict_auto_review::app_reviewer_user' (533133) panicked at app-server/tests/suite/v2/mcp_server_elicitation.rs:965:14"
+        },
+        {
+          "name": "suite::v2::mcp_server_elicitation::mcp_server_strict_auto_review::full_access",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::mcp_server_elicitation::mcp_server_strict_auto_review::full_access' (534864) panicked at app-server/tests/suite/v2/mcp_server_elicitation.rs:965:14"
+        },
+        {
+          "name": "suite::v2::mcp_server_elicitation::mcp_server_strict_auto_review::guardian_disabled",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::mcp_server_elicitation::mcp_server_strict_auto_review::guardian_disabled' (535646) panicked at app-server/tests/suite/v2/mcp_server_elicitation.rs:965:14"
+        },
+        {
+          "name": "suite::v2::mcp_server_elicitation::mcp_server_strict_auto_review::managed_guardian_disabled",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::mcp_server_elicitation::mcp_server_strict_auto_review::managed_guardian_disabled' (536364) panicked at app-server/tests/suite/v2/mcp_server_elicitation.rs:965:14"
+        },
+        {
+          "name": "suite::v2::mcp_server_elicitation::mcp_server_strict_auto_review::managed_reviewer_forbidden",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::mcp_server_elicitation::mcp_server_strict_auto_review::managed_reviewer_forbidden' (537509) panicked at app-server/tests/suite/v2/mcp_server_elicitation.rs:965:14"
+        },
+        {
+          "name": "suite::v2::mcp_server_elicitation::mcp_server_strict_auto_review::never",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::mcp_server_elicitation::mcp_server_strict_auto_review::never' (538248) panicked at app-server/tests/suite/v2/mcp_server_elicitation.rs:895:9"
+        },
+        {
+          "name": "suite::v2::mcp_server_elicitation::mcp_server_strict_auto_review::persistent",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::mcp_server_elicitation::mcp_server_strict_auto_review::persistent' (538967) panicked at app-server/tests/suite/v2/mcp_server_elicitation.rs:965:14"
+        },
+        {
+          "name": "suite::v2::mcp_server_elicitation::mcp_server_strict_auto_review::three_denials_interrupt",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::mcp_server_elicitation::mcp_server_strict_auto_review::three_denials_interrupt' (539803) panicked at app-server/tests/suite/v2/mcp_server_elicitation.rs:882:21"
+        },
+        {
+          "name": "suite::v2::mcp_server_elicitation::mcp_server_openai_form_elicitation_round_trip",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::v2::mcp_server_elicitation::mcp_server_strict_auto_review::approve_for_me",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::mcp_server_elicitation::mcp_server_strict_auto_review::approve_for_me' (533822) panicked at /home/krzako/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wiremock-0.6.5/src/mock_server/exposed_server.rs:367:17"
+        },
+        {
+          "name": "suite::v2::mcp_server_elicitation::mcp_server_strict_auto_review::approved",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::mcp_server_elicitation::mcp_server_strict_auto_review::approved' (534100) panicked at /home/krzako/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wiremock-0.6.5/src/mock_server/exposed_server.rs:367:17"
+        },
+        {
+          "name": "suite::v2::mcp_server_elicitation::openai_form_capability_follows_the_turn_starting_connection",
+          "type": "test failure with exit code 101",
+          "message": "Error: timed out waiting for websocket frame"
+        },
+        {
+          "name": "suite::v2::memory_reset::memory_reset_clears_memory_files_and_rows_preserves_threads",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::memory_reset::memory_reset_clears_memory_files_and_rows_preserves_threads' (546846) panicked at app-server/tests/suite/v2/memory_reset.rs:63:9"
+        },
+        {
+          "name": "suite::v2::memory_reset::memory_status_requires_successful_v2_consolidation_and_resets",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::memory_reset::memory_status_requires_successful_v2_consolidation_and_resets' (547026) panicked at app-server/tests/suite/v2/memory_reset.rs:206:5"
+        },
+        {
+          "name": "suite::v2::mcp_tool::mcp_tool_call_hint_survives_mid_call_thread_read_and_resume",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::v2::mcp_tool::mcp_tool_call_completion_notification_contains_truncated_large_result",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::v2::mcp_tool::model_mcp_tool_call_uses_session_client_extensions",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::v2::multi_agent_v2_developer_instructions::cold_resume_preserves_effective_developer_instructions_for_worker::inherits_parent_developer_instructions_without_an_override",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::multi_agent_v2_developer_instructions::cold_resume_preserves_effective_developer_instructions_for_worker::inherits_parent_developer_instructions_without_an_override' (550200) panicked at app-server/tests/suite/v2/multi_agent_v2_developer_instructions.rs:674:14"
+        },
+        {
+          "name": "suite::v2::multi_agent_v2_developer_instructions::cold_resume_preserves_effective_developer_instructions_for_worker::reapplies_an_implicitly_selected_configured_default_role",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::multi_agent_v2_developer_instructions::cold_resume_preserves_effective_developer_instructions_for_worker::reapplies_an_implicitly_selected_configured_default_role' (550277) panicked at app-server/tests/suite/v2/multi_agent_v2_developer_instructions.rs:674:14"
+        },
+        {
+          "name": "suite::v2::multi_agent_v2_developer_instructions::cold_resume_preserves_effective_developer_instructions_for_worker::reapplies_configured_subagent_developer_instructions",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::multi_agent_v2_developer_instructions::cold_resume_preserves_effective_developer_instructions_for_worker::reapplies_configured_subagent_developer_instructions' (550390) panicked at app-server/tests/suite/v2/multi_agent_v2_developer_instructions.rs:674:14"
+        },
+        {
+          "name": "suite::v2::multi_agent_v2_developer_instructions::cold_resume_preserves_effective_developer_instructions_for_worker::reapplies_updated_configured_role_settings_and_restores_paginated_usage",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::multi_agent_v2_developer_instructions::cold_resume_preserves_effective_developer_instructions_for_worker::reapplies_updated_configured_role_settings_and_restores_paginated_usage' (550561) panicked at app-server/tests/suite/v2/multi_agent_v2_developer_instructions.rs:674:14"
+        },
+        {
+          "name": "suite::v2::multi_agent_v2_developer_instructions::spawned_subagents_apply_configured_developer_instruction_precedence::blank_override",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::v2::multi_agent_v2_developer_instructions::spawned_subagents_apply_configured_developer_instruction_precedence::bounded_history",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::v2::multi_agent_v2_developer_instructions::spawned_subagents_apply_configured_developer_instruction_precedence::bounded_implicit_configured_default",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::v2::multi_agent_v2_developer_instructions::compacted_full_history_fork_replaces_parent_developer_instructions",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::v2::multi_agent_v2_developer_instructions::spawned_subagents_apply_configured_developer_instruction_precedence::configured_role_without_instructions",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::v2::multi_agent_v2_developer_instructions::spawned_subagents_apply_configured_developer_instruction_precedence::explicit_configured_role",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::v2::multi_agent_v2_developer_instructions::spawned_subagents_apply_configured_developer_instruction_precedence::full_fork_skips_default_role",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::v2::multi_agent_v2_developer_instructions::spawned_subagents_apply_configured_developer_instruction_precedence::full_history",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::v2::multi_agent_v2_developer_instructions::spawned_subagents_apply_configured_developer_instruction_precedence::full_history_configured_role",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::v2::multi_agent_v2_developer_instructions::spawned_subagents_apply_configured_developer_instruction_precedence::implicit_configured_default",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::v2::multi_agent_v2_developer_instructions::spawned_subagents_apply_configured_developer_instruction_precedence::parent_has_no_instructions",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::v2::multi_agent_v2_developer_instructions::spawned_subagents_apply_configured_developer_instruction_precedence::no_history",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::v2::multi_agent_v2_developer_instructions::spawned_subagents_apply_configured_developer_instruction_precedence::unset_override",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::v2::projects::deleted_project_is_dropped_before_first_durable_thread_persistence",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::projects::deleted_project_is_dropped_before_first_durable_thread_persistence' (585447) panicked at app-server/tests/common/test_app_server.rs:1674:13"
+        },
+        {
+          "name": "suite::v2::projects::projects_list_by_recency_and_preserve_metadata_timestamps",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::projects::projects_list_by_recency_and_preserve_metadata_timestamps' (585538) panicked at app-server/tests/suite/v2/projects.rs:80:9"
+        },
+        {
+          "name": "suite::v2::projects::project_import_is_atomic_and_notifies_after_commit_in_order",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::projects::project_import_is_atomic_and_notifies_after_commit_in_order' (585547) panicked at app-server/tests/suite/v2/projects.rs:769:9"
+        },
+        {
+          "name": "suite::v2::projects::projects_persist_and_assign_threads",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::projects::projects_persist_and_assign_threads' (586053) panicked at app-server/tests/suite/v2/projects.rs:392:5"
+        },
+        {
+          "name": "suite::v2::recommended_plugins::first_turn_after_external_login_waits_for_recommended_plugins",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::recommended_plugins::first_turn_after_external_login_waits_for_recommended_plugins' (591537) panicked at app-server/tests/suite/v2/recommended_plugins.rs:184:5"
+        },
+        {
+          "name": "suite::v2::remote_control::disable_waits_for_in_flight_durable_enable",
+          "type": "test failure with exit code 101",
+          "message": "Error: enrollment should exist"
+        },
+        {
+          "name": "suite::v2::remote_control::rpc_updates_durable_preference_but_ephemeral_does_not",
+          "type": "test failure with exit code 101",
+          "message": "Error: enrollment should exist"
+        },
+        {
+          "name": "suite::v2::request_permissions::request_permissions_round_trip",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::v2::request_user_input::request_user_input_default_mode_forwards_non_blocking",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::v2::request_user_input::request_user_input_round_trip",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::v2::selected_capability_stack::managed_plugins_requirement_disables_selected_executor_plugin_capabilities::direct_selected_root_discovery",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::selected_capability_stack::managed_plugins_requirement_disables_selected_executor_plugin_capabilities::direct_selected_root_discovery' (599375) panicked at app-server/tests/suite/v2/selected_capability_stack.rs:973:10"
+        },
+        {
+          "name": "suite::v2::selected_capability_stack::managed_plugins_requirement_disables_selected_executor_plugin_capabilities::batched_executor_capability_discovery",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::selected_capability_stack::managed_plugins_requirement_disables_selected_executor_plugin_capabilities::batched_executor_capability_discovery' (599371) panicked at app-server/tests/suite/v2/selected_capability_stack.rs:973:10"
+        },
+        {
+          "name": "suite::v2::remote_control::listen_off_honors_persisted_remote_control_enable",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::v2::selected_capability_stack::selected_capabilities_become_available_between_samples_in_one_turn::with_an_initial_plugin_mention_across_a_restart",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::selected_capability_stack::selected_capabilities_become_available_between_samples_in_one_turn::with_an_initial_plugin_mention_across_a_restart' (602715) panicked at app-server/tests/suite/v2/selected_capability_stack.rs:973:10"
+        },
+        {
+          "name": "suite::v2::selected_capability_stack::selected_capabilities_become_available_between_samples_in_one_turn::with_a_steered_plugin_mention",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::v2::selected_capability_stack::selected_capabilities_become_available_between_samples_in_one_turn::with_an_initial_plugin_mention",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::v2::selected_capability_stack::selected_capabilities_become_available_between_samples_in_one_turn::with_a_steered_server_mention",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::v2::selected_capability_stack::selected_capability_stack_tracks_environment_availability_and_resume",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::selected_capability_stack::selected_capability_stack_tracks_environment_availability_and_resume' (603928) panicked at app-server/tests/suite/v2/selected_capability_stack.rs:973:10"
+        },
+        {
+          "name": "suite::v2::selected_capability_stack::selected_plugin_mcp_startup_respects_explicit_mentions::plugin_link_batched",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::selected_capability_stack::selected_plugin_mcp_startup_respects_explicit_mentions::plugin_link_batched' (605075) panicked at app-server/tests/suite/v2/selected_capability_stack.rs:177:5"
+        },
+        {
+          "name": "suite::v2::selected_capability_stack::selected_plugin_mcp_startup_respects_explicit_mentions::plugin_link_direct",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::selected_capability_stack::selected_plugin_mcp_startup_respects_explicit_mentions::plugin_link_direct' (605417) panicked at app-server/tests/suite/v2/selected_capability_stack.rs:177:5"
+        },
+        {
+          "name": "suite::v2::selected_capability_stack::selected_plugin_mcp_startup_respects_explicit_mentions::structured_mention_batched",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::selected_capability_stack::selected_plugin_mcp_startup_respects_explicit_mentions::structured_mention_batched' (606421) panicked at app-server/tests/suite/v2/selected_capability_stack.rs:177:5"
+        },
+        {
+          "name": "suite::v2::selected_capability_stack::selected_plugin_mcp_startup_respects_explicit_mentions::structured_mention_direct",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::selected_capability_stack::selected_plugin_mcp_startup_respects_explicit_mentions::structured_mention_direct' (606765) panicked at app-server/tests/suite/v2/selected_capability_stack.rs:177:5"
+        },
+        {
+          "name": "suite::v2::selected_capability_stack::selected_capabilities_become_available_between_samples_in_one_turn::with_an_initial_server_mention",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::v2::selected_environment::command_execution_notifications_preserve_selected_environment_paths",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::v2::selected_capability_stack::selected_capabilities_become_available_between_samples_in_one_turn::without_a_mention",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::v2::sleep::clock_tools_emit_control_tool_analytics",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::v2::sleep::external_sleep_polls_current_time_and_emits_items::initial_read_fails",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::sleep::external_sleep_polls_current_time_and_emits_items::initial_read_fails' (611953) panicked at /home/krzako/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wiremock-0.6.5/src/mock_server/exposed_server.rs:367:17"
+        },
+        {
+          "name": "suite::v2::sleep::external_sleep_polls_current_time_and_emits_items::polling_read_fails",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::sleep::external_sleep_polls_current_time_and_emits_items::polling_read_fails' (612422) panicked at /home/krzako/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wiremock-0.6.5/src/mock_server/exposed_server.rs:367:17"
+        },
+        {
+          "name": "suite::v2::thread_archive::thread_archive_rejects_owned_unmaterialized_paginated_descendant",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::thread_archive::thread_archive_rejects_owned_unmaterialized_paginated_descendant' (613536) panicked at app-server/tests/common/test_app_server.rs:1705:13"
+        },
+        {
+          "name": "suite::v2::sleep::external_sleep_polls_current_time_and_emits_items::successful_reads",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::sleep::external_sleep_polls_current_time_and_emits_items::successful_reads' (612554) panicked at /home/krzako/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wiremock-0.6.5/src/mock_server/exposed_server.rs:367:17"
+        },
+        {
+          "name": "suite::v2::thread_archive::thread_archive_archives_spawned_descendants",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::v2::thread_fork::paginated_thread_fork_at_named_boundaries_keeps_only_terminal_prefix",
+          "type": "test failure with exit code 101",
+          "message": "Error: error returned from database: (code: 1) no such table: main.thread_attachments"
+        },
+        {
+          "name": "suite::v2::thread_fork::thread_fork_at_last_turn_id_keeps_only_terminal_prefix",
+          "type": "test failure with exit code 101",
+          "message": "Error: error returned from database: (code: 1) no such table: main.thread_attachments"
+        },
+        {
+          "name": "suite::v2::thread_archive::thread_archive_shuts_down_resumed_archived_descendant",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::v2::thread_archive::thread_archive_succeeds_when_descendant_archive_fails",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::v2::thread_fork::thread_fork_defers_inherited_active_goal_until_next_turn",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::thread_fork::thread_fork_defers_inherited_active_goal_until_next_turn' (618299) panicked at app-server/tests/suite/v2/thread_fork.rs:1017:9"
+        },
+        {
+          "name": "suite::v2::thread_delete::thread_delete_deletes_spawned_descendants",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::v2::thread_fork_multi_agent::fork_before_first_turn_preserves_model_selected_multi_agent_version::legacy_loaded",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::thread_fork_multi_agent::fork_before_first_turn_preserves_model_selected_multi_agent_version::legacy_loaded' (621582) panicked at app-server/tests/suite/v2/thread_fork_multi_agent_tests.rs:146:5"
+        },
+        {
+          "name": "suite::v2::thread_fork_multi_agent::fork_before_first_turn_preserves_model_selected_multi_agent_version::paginated_loaded",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::thread_fork_multi_agent::fork_before_first_turn_preserves_model_selected_multi_agent_version::paginated_loaded' (621887) panicked at app-server/tests/suite/v2/thread_fork_multi_agent_tests.rs:146:5"
+        },
+        {
+          "name": "suite::v2::thread_fork_multi_agent::fork_before_first_turn_preserves_model_selected_multi_agent_version::legacy_unloaded",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::thread_fork_multi_agent::fork_before_first_turn_preserves_model_selected_multi_agent_version::legacy_unloaded' (621811) panicked at app-server/tests/suite/v2/thread_fork_multi_agent_tests.rs:146:5"
+        },
+        {
+          "name": "suite::v2::thread_fork_multi_agent::fork_before_first_turn_preserves_model_selected_multi_agent_version::paginated_unloaded",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::thread_fork_multi_agent::fork_before_first_turn_preserves_model_selected_multi_agent_version::paginated_unloaded' (623232) panicked at app-server/tests/suite/v2/thread_fork_multi_agent_tests.rs:146:5"
+        },
+        {
+          "name": "suite::v2::thread_inject_items::thread_inject_items_adds_raw_response_items_to_thread_history::legacy",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::thread_inject_items::thread_inject_items_adds_raw_response_items_to_thread_history::legacy' (624932) panicked at app-server/tests/suite/v2/thread_inject_items.rs:133:5"
+        },
+        {
+          "name": "suite::v2::thread_inject_items::thread_inject_items_adds_raw_response_items_to_thread_history::paginated",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::thread_inject_items::thread_inject_items_adds_raw_response_items_to_thread_history::paginated' (625409) panicked at app-server/tests/suite/v2/thread_inject_items.rs:133:5"
+        },
+        {
+          "name": "suite::v2::thread_list::thread_list_relation_filters_read_spawn_graph_from_state_db",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::thread_list::thread_list_relation_filters_read_spawn_graph_from_state_db' (627252) panicked at app-server/tests/suite/v2/thread_list.rs:1131:5"
+        },
+        {
+          "name": "suite::v2::thread_list::thread_list_reports_loaded_subagent_direct_input_capability",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::thread_list::thread_list_reports_loaded_subagent_direct_input_capability' (627537) panicked at app-server/tests/common/test_app_server.rs:1674:13"
+        },
+        {
+          "name": "suite::v2::thread_list::thread_list_respects_search_term_filter",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::thread_list::thread_list_respects_search_term_filter' (628186) panicked at app-server/tests/suite/v2/thread_list.rs:688:5"
+        },
+        {
+          "name": "suite::v2::thread_list::thread_list_state_db_only_returns_sqlite_without_jsonl_repair",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::thread_list::thread_list_state_db_only_returns_sqlite_without_jsonl_repair' (628605) panicked at app-server/tests/suite/v2/thread_list.rs:984:10"
+        },
+        {
+          "name": "suite::v2::thread_list::thread_list_sort_recency_at_uses_state_db_order_with_provider_filter",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::thread_list::thread_list_sort_recency_at_uses_state_db_order_with_provider_filter' (628402) panicked at app-server/tests/suite/v2/thread_list.rs:2207:5"
+        },
+        {
+          "name": "suite::v2::thread_list::thread_originator_is_preserved_in_list_read_and_resume::_codex_work_desktop_expects",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::thread_list::thread_originator_is_preserved_in_list_read_and_resume::_codex_work_desktop_expects' (629183) panicked at app-server/tests/suite/v2/thread_list.rs:2713:9"
+        },
+        {
+          "name": "suite::v2::thread_list::thread_search_filters_by_source_kind",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::thread_list::thread_search_filters_by_source_kind' (629310) panicked at app-server/tests/suite/v2/thread_list.rs:912:5"
+        },
+        {
+          "name": "suite::v2::thread_list::thread_search_matches_json_escaped_content",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::thread_list::thread_search_matches_json_escaped_content' (629579) panicked at app-server/tests/suite/v2/thread_list.rs:863:5"
+        },
+        {
+          "name": "suite::v2::thread_list::thread_search_returns_content_matches",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::thread_list::thread_search_returns_content_matches' (629810) panicked at app-server/tests/suite/v2/thread_list.rs:752:5"
+        },
+        {
+          "name": "suite::v2::thread_memory_mode_set::thread_memory_mode_set_updates_stored_thread_state",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::thread_memory_mode_set::thread_memory_mode_set_updates_stored_thread_state' (630357) panicked at app-server/tests/suite/v2/thread_memory_mode_set.rs:98:5"
+        },
+        {
+          "name": "suite::v2::thread_memory_mode_set::thread_memory_mode_set_updates_loaded_thread_state",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::thread_memory_mode_set::thread_memory_mode_set_updates_loaded_thread_state' (630242) panicked at app-server/tests/suite/v2/thread_memory_mode_set.rs:55:5"
+        },
+        {
+          "name": "suite::v2::thread_metadata_update::thread_section_move_pins_and_unpins_with_filtered_recency_pagination",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::thread_metadata_update::thread_section_move_pins_and_unpins_with_filtered_recency_pagination' (631417) panicked at app-server/tests/suite/v2/thread_metadata_update.rs:212:5"
+        },
+        {
+          "name": "suite::v2::thread_metadata_update::thread_section_move_pins_before_first_turn",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::thread_metadata_update::thread_section_move_pins_before_first_turn' (631662) panicked at app-server/tests/suite/v2/thread_metadata_update.rs:113:9"
+        },
+        {
+          "name": "suite::v2::thread_metadata_update::thread_sections_preserve_server_owned_manual_order_across_moves_and_restarts",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::thread_metadata_update::thread_sections_preserve_server_owned_manual_order_across_moves_and_restarts' (631888) panicked at app-server/tests/common/test_app_server.rs:1674:13"
+        },
+        {
+          "name": "suite::v2::thread_metadata_update::thread_metadata_update_sanitizes_git_origin_before_persisting",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::thread_metadata_update::thread_metadata_update_sanitizes_git_origin_before_persisting' (631293) panicked at app-server/tests/suite/v2/thread_metadata_update.rs:721:10"
+        },
+        {
+          "name": "suite::v2::thread_queue::a_new_turn_preserves_queued_messages_until_it_completes",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::thread_queue::a_new_turn_preserves_queued_messages_until_it_completes' (632364) panicked at /home/krzako/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wiremock-0.6.5/src/mock_server/exposed_server.rs:367:17"
+        },
+        {
+          "name": "suite::v2::thread_queue::interrupt_preserves_queue_and_queue_start_can_resume_a_non_head_item",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::thread_queue::interrupt_preserves_queue_and_queue_start_can_resume_a_non_head_item' (632986) panicked at /home/krzako/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wiremock-0.6.5/src/mock_server/exposed_server.rs:367:17"
+        },
+        {
+          "name": "suite::v2::thread_queue::queue_crud_preserves_identity_order_and_notifications",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::thread_queue::queue_crud_preserves_identity_order_and_notifications' (633024) panicked at /home/krzako/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wiremock-0.6.5/src/mock_server/exposed_server.rs:367:17"
+        },
+        {
+          "name": "suite::v2::thread_goal_empty_responses::empty_goal_continuations_block_after_three_without_activity::tool",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::thread_goal_empty_responses::empty_goal_continuations_block_after_three_without_activity::tool' (624505) panicked at /home/krzako/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wiremock-0.6.5/src/mock_server/exposed_server.rs:367:17"
+        },
+        {
+          "name": "suite::v2::thread_queue::queue_list_returns_ordered_pages_and_lightweight_notifications",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::thread_queue::queue_list_returns_ordered_pages_and_lightweight_notifications' (633917) panicked at /home/krzako/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wiremock-0.6.5/src/mock_server/exposed_server.rs:367:17"
+        },
+        {
+          "name": "suite::v2::thread_read::paginated_history_lists_and_legacy_reads_use_projected_turns_and_items",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::thread_read::paginated_history_lists_and_legacy_reads_use_projected_turns_and_items' (635045) panicked at app-server/tests/suite/v2/thread_read.rs:1800:5"
+        },
+        {
+          "name": "suite::v2::thread_queue::queue_rejects_messages_after_reaching_its_capacity",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::thread_queue::queue_rejects_messages_after_reaching_its_capacity' (634064) panicked at /home/krzako/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wiremock-0.6.5/src/mock_server/exposed_server.rs:367:17"
+        },
+        {
+          "name": "suite::v2::thread_read::paginated_thread_name_set_is_reflected_in_read_list_and_metadata_resume",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::thread_read::paginated_thread_name_set_is_reflected_in_read_list_and_metadata_resume' (635417) panicked at app-server/tests/suite/v2/thread_read.rs:1472:10"
+        },
+        {
+          "name": "suite::v2::thread_queue::queue_start_while_active_returns_busy_and_preserves_the_queue",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::v2::thread_read::thread_search_occurrences_reads_paginated_projection",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::thread_read::thread_search_occurrences_reads_paginated_projection' (636775) panicked at app-server/tests/common/test_app_server.rs:1674:13"
+        },
+        {
+          "name": "suite::v2::thread_resume::thread_goal_mutations_preserve_authoritative_sqlite_metadata",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::thread_resume::thread_goal_mutations_preserve_authoritative_sqlite_metadata' (640801) panicked at app-server/tests/suite/v2/thread_resume.rs:2133:10"
+        },
+        {
+          "name": "suite::v2::thread_resume::thread_goal_set_edits_objective_without_resetting_usage",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::thread_resume::thread_goal_set_edits_objective_without_resetting_usage' (641366) panicked at app-server/tests/suite/v2/thread_resume.rs:3379:10"
+        },
+        {
+          "name": "suite::v2::thread_resume::thread_goal_set_repairs_missing_sqlite_metadata",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::thread_resume::thread_goal_set_repairs_missing_sqlite_metadata' (641938) panicked at app-server/tests/suite/v2/thread_resume.rs:2230:5"
+        },
+        {
+          "name": "suite::v2::thread_resume::thread_resume_checkpoints_settings_without_advancing_recency",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::thread_resume::thread_resume_checkpoints_settings_without_advancing_recency' (642769) panicked at app-server/tests/suite/v2/thread_resume.rs:4690:5"
+        },
+        {
+          "name": "suite::v2::thread_resume::thread_resume_keeps_tool_paused_goal_paused",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::thread_resume::thread_resume_keeps_tool_paused_goal_paused' (643512) panicked at app-server/tests/suite/v2/thread_resume.rs:3039:19"
+        },
+        {
+          "name": "suite::v2::thread_resume::thread_resume_paginated_model_context_preserves_original_metadata",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::thread_resume::thread_resume_paginated_model_context_preserves_original_metadata' (643658) panicked at app-server/tests/suite/v2/thread_resume.rs:296:10"
+        },
+        {
+          "name": "suite::v2::thread_queue::queue_start_without_id_starts_the_head_when_idle",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::thread_queue::queue_start_without_id_starts_the_head_when_idle' (635007) panicked at /home/krzako/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wiremock-0.6.5/src/mock_server/exposed_server.rs:367:17"
+        },
+        {
+          "name": "suite::v2::thread_resume::thread_goal_keeps_original_root_until_external_objective_edit",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::v2::thread_resume::thread_resume_replays_pending_command_execution_request_approval",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::v2::thread_revert::thread_revert_preserves_model_selected_multi_agent_version::cold_resume",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::thread_revert::thread_revert_preserves_model_selected_multi_agent_version::cold_resume' (651368) panicked at app-server/tests/suite/v2/thread_revert.rs:144:5"
+        },
+        {
+          "name": "suite::v2::thread_resume::thread_resume_replays_pending_file_change_request_approval",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::v2::thread_sections::custom_sections_remain_discoverable_across_ordered_updates_and_restart",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::thread_sections::custom_sections_remain_discoverable_across_ordered_updates_and_restart' (652389) panicked at app-server/tests/suite/v2/thread_sections.rs:99:5"
+        },
+        {
+          "name": "suite::v2::thread_revert::thread_revert_preserves_model_selected_multi_agent_version::live_reload",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::thread_revert::thread_revert_preserves_model_selected_multi_agent_version::live_reload' (651951) panicked at app-server/tests/suite/v2/thread_revert.rs:144:5"
+        },
+        {
+          "name": "suite::v2::thread_settings_update::thread_settings_update_emits_notification_and_updates_future_turns",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::thread_settings_update::thread_settings_update_emits_notification_and_updates_future_turns' (654450) panicked at app-server/tests/suite/v2/thread_settings_update.rs:293:10"
+        },
+        {
+          "name": "suite::v2::thread_revert::thread_revert_interrupts_active_turn_and_keeps_thread_loaded",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::v2::thread_timeline::timeline_pages_mix_items_and_resolve_the_opening_realtime_session",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::thread_timeline::timeline_pages_mix_items_and_resolve_the_opening_realtime_session' (661463) panicked at app-server/tests/common/test_app_server.rs:1674:13"
+        },
+        {
+          "name": "suite::v2::turn_interrupt::turn_interrupt_resolves_pending_command_approval_request",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::turn_interrupt::turn_interrupt_resolves_pending_command_approval_request' (663290) panicked at /home/krzako/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wiremock-0.6.5/src/mock_server/exposed_server.rs:367:17"
+        },
+        {
+          "name": "suite::v2::turn_settings_update::live_reviewer_updates_route_approvals_without_changing_future_turns::disable_auto_review",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::turn_settings_update::live_reviewer_updates_route_approvals_without_changing_future_turns::disable_auto_review' (663669) panicked at /home/krzako/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wiremock-0.6.5/src/mock_server/exposed_server.rs:367:17"
+        },
+        {
+          "name": "suite::v2::turn_settings_update::live_reviewer_updates_route_approvals_without_changing_future_turns::enable_auto_review",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::turn_settings_update::live_reviewer_updates_route_approvals_without_changing_future_turns::enable_auto_review' (664197) panicked at /home/krzako/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wiremock-0.6.5/src/mock_server/exposed_server.rs:367:17"
+        },
+        {
+          "name": "suite::v2::turn_settings_update::settings_updates_report_results_and_preserve_the_target_on_saved_threads::future_only_a_a_b",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::turn_settings_update::settings_updates_report_results_and_preserve_the_target_on_saved_threads::future_only_a_a_b' (664360) panicked at /home/krzako/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wiremock-0.6.5/src/mock_server/exposed_server.rs:367:17"
+        },
+        {
+          "name": "suite::v2::turn_settings_update::settings_updates_report_results_and_preserve_the_target_on_saved_threads::rejected_turn_update_changes_neither_owner",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::turn_settings_update::settings_updates_report_results_and_preserve_the_target_on_saved_threads::rejected_turn_update_changes_neither_owner' (665181) panicked at /home/krzako/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wiremock-0.6.5/src/mock_server/exposed_server.rs:367:17"
+        },
+        {
+          "name": "suite::v2::turn_settings_update::settings_updates_report_results_and_preserve_the_target_on_saved_threads::turn_only_a_b_a",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::turn_settings_update::settings_updates_report_results_and_preserve_the_target_on_saved_threads::turn_only_a_b_a' (665327) panicked at /home/krzako/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wiremock-0.6.5/src/mock_server/exposed_server.rs:367:17"
+        },
+        {
+          "name": "suite::v2::turn_start::code_mode_exec_emits_correlated_production_analytics",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::v2::turn_start::direct_input_to_multi_agent_v2_subagent_is_rejected::legacy",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::v2::thread_shell_command::thread_shell_command_timeout_preserves_active_turn",
+          "type": "test timeout",
+          "message": null
+        },
+        {
+          "name": "suite::v2::thread_shell_command::thread_shell_command_uses_existing_active_turn",
+          "type": "test timeout",
+          "message": null
+        },
+        {
+          "name": "suite::v2::turn_start::direct_input_to_multi_agent_v2_subagent_is_rejected::paginated",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::v2::turn_start::turn_profile_tracks_blocking_tool_and_follow_up_sampling",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::turn_start::turn_profile_tracks_blocking_tool_and_follow_up_sampling' (667505) panicked at /home/krzako/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wiremock-0.6.5/src/mock_server/exposed_server.rs:367:17"
+        },
+        {
+          "name": "suite::v2::view_image::guardian_reviewer_inherits_disabled_view_image",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::view_image::guardian_reviewer_inherits_disabled_view_image' (674618) panicked at app-server/tests/suite/v2/view_image.rs:264:9"
+        },
+        {
+          "name": "suite::v2::view_image::fresh_context_subagent_inherits_disabled_view_image_and_mcp_tools",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::v2::web_search::standalone_web_search_round_trips_output",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::web_search::standalone_web_search_round_trips_output' (674805) panicked at /home/krzako/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wiremock-0.6.5/src/mock_server/exposed_server.rs:367:17"
+        },
+        {
+          "name": "suite::v2::web_search::standalone_web_search_round_trips_output_for_custom_provider",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::v2::web_search::standalone_web_search_round_trips_output_for_custom_provider' (675350) panicked at /home/krzako/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wiremock-0.6.5/src/mock_server/exposed_server.rs:367:17"
+        },
+        {
+          "name": "suite::v2::turn_start::turn_start_enforces_managed_network_sandbox",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        }
+      ]
+    },
+    {
+      "suite": "codex-cli::debug_clear_memories",
+      "tests": 2,
+      "failures": [
+        {
+          "name": "debug_clear_memories_resets_memories_db_without_state_db",
+          "type": "test failure with exit code 101",
+          "message": "thread 'debug_clear_memories_resets_memories_db_without_state_db' (196829) panicked at cli/tests/debug_clear_memories.rs:180:5"
+        },
+        {
+          "name": "debug_clear_memories_resets_state_and_removes_memory_dir",
+          "type": "test failure with exit code 101",
+          "message": "thread 'debug_clear_memories_resets_state_and_removes_memory_dir' (196833) panicked at cli/tests/debug_clear_memories.rs:122:5"
+        }
+      ]
+    },
+    {
+      "suite": "codex-core",
+      "tests": 2447,
+      "failures": [
+        {
+          "name": "config::tests::sqlite_home_defaults_to_codex_home_for_workspace_write",
+          "type": "test failure with exit code 101",
+          "message": "thread 'config::tests::sqlite_home_defaults_to_codex_home_for_workspace_write' (241474) panicked at core/src/config/config_tests.rs:6070:5"
+        },
+        {
+          "name": "stream_events_utils::tests::direct_results_keep_their_own_records_when_call_ids_repeat",
+          "type": "test failure with exit code 101",
+          "message": "thread 'stream_events_utils::tests::direct_results_keep_their_own_records_when_call_ids_repeat' (256192) panicked at core/src/stream_events_utils_tests.rs:379:9"
+        }
+      ]
+    },
+    {
+      "suite": "codex-core::all",
+      "tests": 1980,
+      "failures": [
+        {
+          "name": "suite::agent_execution::child_turn_start_preserves_root_attribution",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::agent_execution::child_turn_start_preserves_root_attribution' (273576) panicked at core/tests/suite/agent_execution.rs:232:5"
+        },
+        {
+          "name": "suite::agents_md::isolated_guardian_keeps_applied_thread_instructions",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::agents_md::isolated_guardian_keeps_applied_thread_instructions' (276780) panicked at core/tests/suite/agents_md.rs:1370:5"
+        },
+        {
+          "name": "suite::agent_execution::v2_nested_spawn_checks_shared_active_execution_capacity",
+          "type": "test failure with exit code 101",
+          "message": "Error: deadline has elapsed"
+        },
+        {
+          "name": "suite::app_tool_exposure::connector_omissions_preserve_direct_only_namespace",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::app_tool_exposure::connector_omissions_preserve_direct_only_namespace' (278263) panicked at core/tests/suite/app_tool_exposure.rs:205:5"
+        },
+        {
+          "name": "suite::app_tool_exposure::connector_omissions_respect_server_restrictions::server_excludes_direct",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::app_tool_exposure::connector_omissions_respect_server_restrictions::server_excludes_direct' (278434) panicked at core/tests/suite/app_tool_exposure.rs:228:9"
+        },
+        {
+          "name": "suite::app_tool_exposure::connector_omissions_respect_server_restrictions::server_excludes_exec",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::app_tool_exposure::connector_omissions_respect_server_restrictions::server_excludes_exec' (278495) panicked at core/tests/suite/app_tool_exposure.rs:205:5"
+        },
+        {
+          "name": "suite::app_tool_exposure::non_deferred_connector_exposure_and_dispatch::code_mode",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::app_tool_exposure::non_deferred_connector_exposure_and_dispatch::code_mode' (279047) panicked at core/tests/suite/app_tool_exposure.rs:205:5"
+        },
+        {
+          "name": "suite::app_tool_exposure::non_deferred_connector_exposure_and_dispatch::code_mode_only",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::app_tool_exposure::non_deferred_connector_exposure_and_dispatch::code_mode_only' (279129) panicked at core/tests/suite/app_tool_exposure.rs:222:5"
+        },
+        {
+          "name": "suite::app_tool_exposure::non_deferred_connector_exposure_and_dispatch::direct",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::app_tool_exposure::non_deferred_connector_exposure_and_dispatch::direct' (279369) panicked at core/tests/suite/app_tool_exposure.rs:205:5"
+        },
+        {
+          "name": "suite::approvals::approving_execpolicy_amendment_is_reported_when_permissions_are_disabled",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::approvals::approving_execpolicy_amendment_is_reported_when_permissions_are_disabled' (279744) panicked at core/tests/suite/approvals.rs:805:38"
+        },
+        {
+          "name": "suite::approvals::approving_execpolicy_amendment_does_not_reinject_permissions_instructions",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::approvals::approving_execpolicy_amendment_does_not_reinject_permissions_instructions' (279743) panicked at core/tests/suite/approvals.rs:805:38"
+        },
+        {
+          "name": "suite::approvals::approving_execpolicy_amendment_persists_policy_and_skips_future_prompts",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::approvals::approving_execpolicy_amendment_persists_policy_and_skips_future_prompts' (280007) panicked at core/tests/suite/approvals.rs:805:38"
+        },
+        {
+          "name": "suite::code_mode::code_mode_exec_holds_captured_result_during_elicitation",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::code_mode::code_mode_exec_holds_captured_result_during_elicitation' (282099) panicked at core/tests/suite/code_mode.rs:806:9"
+        },
+        {
+          "name": "suite::exec_policy::environment_command_policy_changes_invalidate_session_approvals",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::exec_policy::environment_command_policy_changes_invalidate_session_approvals' (283665) panicked at core/tests/suite/exec_policy.rs:902:13"
+        },
+        {
+          "name": "suite::exec_policy::execpolicy_blocks_shell_invocation",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::exec_policy::execpolicy_blocks_shell_invocation' (283668) panicked at core/tests/suite/exec_policy.rs:595:5"
+        },
+        {
+          "name": "suite::exec_policy::deeply_nested_forced_rm_is_rejected_before_execution_when_approvals_are_disabled",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::exec_policy::deeply_nested_forced_rm_is_rejected_before_execution_when_approvals_are_disabled' (283667) panicked at core/tests/suite/exec_policy.rs:435:5"
+        },
+        {
+          "name": "suite::exec_policy::environment_command_restrictions_override_saved_prefix_approvals",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::exec_policy::environment_command_restrictions_override_saved_prefix_approvals' (283671) panicked at core/tests/suite/exec_policy.rs:795:5"
+        },
+        {
+          "name": "suite::exec_policy::granular_complex_forced_rm_denial_explains_why_the_command_was_rejected",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::exec_policy::granular_complex_forced_rm_denial_explains_why_the_command_was_rejected' (283674) panicked at core/tests/suite/exec_policy.rs:298:5"
+        },
+        {
+          "name": "suite::exec_policy::git_status_requires_approval_under_unless_trusted",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::exec_policy::git_status_requires_approval_under_unless_trusted' (283676) panicked at core/tests/suite/exec_policy.rs:161:9"
+        },
+        {
+          "name": "suite::exec_policy::granular_complex_forced_rm_requests_approval_when_allowed",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::exec_policy::granular_complex_forced_rm_requests_approval_when_allowed' (284384) panicked at core/tests/suite/exec_policy.rs:360:9"
+        },
+        {
+          "name": "suite::exec_policy::malformed_custom_rules_preserve_managed_forbidden_prefix",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::exec_policy::malformed_custom_rules_preserve_managed_forbidden_prefix' (284450) panicked at core/tests/suite/exec_policy.rs:673:5"
+        },
+        {
+          "name": "suite::openai_file_mcp::codex_apps_file_params_omit_fields_absent_from_tool_schema",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::openai_file_mcp::codex_apps_file_params_omit_fields_absent_from_tool_schema' (289325) panicked at core/tests/suite/openai_file_mcp.rs:258:6"
+        },
+        {
+          "name": "suite::openai_file_mcp::codex_apps_file_params_pass_uploaded_file_to_post_tool_use_hook",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::openai_file_mcp::codex_apps_file_params_pass_uploaded_file_to_post_tool_use_hook' (289353) panicked at /home/krzako/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wiremock-0.6.5/src/mock_server/exposed_server.rs:367:17"
+        },
+        {
+          "name": "suite::multi_exec_server_sandbox::two_exec_servers_isolate_workspace_write_roots",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::multi_exec_server_sandbox::two_exec_servers_isolate_workspace_write_roots' (289149) panicked at core/tests/suite/multi_exec_server_sandbox.rs:235:5"
+        },
+        {
+          "name": "suite::openai_file_mcp::codex_apps_file_params_reject_denied_file_before_upload",
+          "type": "test failure with exit code 101",
+          "message": "Error: denied Apps upload should return a tool error"
+        },
+        {
+          "name": "suite::otel::handle_exec_command_autoapprove_from_config_records_tool_decision",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::otel::handle_exec_command_autoapprove_from_config_records_tool_decision' (290559) panicked at core/tests/suite/otel.rs:1233:1"
+        },
+        {
+          "name": "suite::openai_file_mcp::codex_apps_file_params_stream_allowed_file_under_restricted_read_policy",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::openai_file_mcp::codex_apps_file_params_stream_allowed_file_under_restricted_read_policy' (290437) panicked at core/tests/common/apps_test_server.rs:348:5"
+        },
+        {
+          "name": "suite::approvals::approving_fallback_rule_for_compound_command_works",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::approvals::approving_fallback_rule_for_compound_command_works' (280117) panicked at core/tests/suite/approvals.rs:805:38"
+        },
+        {
+          "name": "suite::approvals::invalid_requested_prefix_rule_falls_back_for_compound_command",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::approvals::invalid_requested_prefix_rule_falls_back_for_compound_command' (280579) panicked at core/tests/suite/approvals.rs:805:38"
+        },
+        {
+          "name": "suite::multi_agent_resume::cold_root_resume_restores_agent_identity_and_role_on_followup",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::multi_agent_resume::cold_root_resume_restores_agent_identity_and_role_on_followup' (288989) panicked at /home/krzako/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wiremock-0.6.5/src/mock_server/bare_server.rs:321:21"
+        },
+        {
+          "name": "suite::abort_tasks::interrupt_persists_turn_aborted_marker_in_next_request",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::abort_tasks::interrupt_persists_turn_aborted_marker_in_next_request' (273420) panicked at core/tests/common/lib.rs:388:14"
+        },
+        {
+          "name": "suite::abort_tasks::interrupt_tool_records_history_entries",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::abort_tasks::interrupt_tool_records_history_entries' (273406) panicked at core/tests/common/lib.rs:388:14"
+        },
+        {
+          "name": "suite::pending_input::steered_user_input_waits_when_tool_output_triggers_compact_before_next_request",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::pending_input::steered_user_input_waits_when_tool_output_triggers_compact_before_next_request' (292685) panicked at core/tests/suite/pending_input.rs:1648:5"
+        },
+        {
+          "name": "suite::agents_md::refresh::global_instructions_refresh_after_a_tool_in_the_same_turn",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::agents_md::refresh::global_instructions_refresh_after_a_tool_in_the_same_turn' (276978) panicked at core/tests/common/lib.rs:388:14"
+        },
+        {
+          "name": "suite::agents_md::thread_provider_refreshes_at_the_next_step_of_an_active_turn",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::agents_md::thread_provider_refreshes_at_the_next_step_of_an_active_turn' (277922) panicked at core/tests/common/lib.rs:388:14"
+        },
+        {
+          "name": "suite::remote_env::deferred_executor_guardian_uses_newly_ready_step_environment",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::remote_env::deferred_executor_guardian_uses_newly_ready_step_environment' (295530) panicked at /home/krzako/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wiremock-0.6.5/src/mock_server/exposed_server.rs:367:17"
+        },
+        {
+          "name": "suite::remote_env::deferred_executor_stays_pending_after_materialization",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::remote_env::deferred_executor_stays_pending_after_materialization' (295983) panicked at core/tests/suite/remote_env.rs:2465:5"
+        },
+        {
+          "name": "suite::remote_env::environment_permissions_follow_configuration_ownership",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::remote_env::environment_permissions_follow_configuration_ownership' (296105) panicked at core/tests/suite/remote_env.rs:587:5"
+        },
+        {
+          "name": "suite::remote_env::failure_tests::provisioning_failure_reaches_model_and_turn_continues::failed_before_turn",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::remote_env::failure_tests::provisioning_failure_reaches_model_and_turn_continues::failed_before_turn' (296268) panicked at core/tests/suite/remote_env_failure_tests.rs:93:5"
+        },
+        {
+          "name": "suite::remote_env::failure_tests::provisioning_failure_reaches_model_and_turn_continues::failed_while_waiting",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::remote_env::failure_tests::provisioning_failure_reaches_model_and_turn_continues::failed_while_waiting' (296287) panicked at core/tests/suite/remote_env_failure_tests.rs:93:5"
+        },
+        {
+          "name": "suite::remote_env::pending_attachment_installs_configuration_before_waiting_turn_resumes",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::remote_env::pending_attachment_installs_configuration_before_waiting_turn_resumes' (296536) panicked at core/tests/suite/remote_env.rs:1848:5"
+        },
+        {
+          "name": "suite::remote_env::ready_before_selection_resolves_resumed_thread_capability_root_after_wait::preserves_persisted_root_when_executor_reports_none",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::remote_env::ready_before_selection_resolves_resumed_thread_capability_root_after_wait::preserves_persisted_root_when_executor_reports_none' (296754) panicked at core/tests/suite/remote_env.rs:2340:5"
+        },
+        {
+          "name": "suite::remote_env::ready_before_selection_resolves_resumed_thread_capability_root_after_wait::uses_refreshed_executor_root",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::remote_env::ready_before_selection_resolves_resumed_thread_capability_root_after_wait::uses_refreshed_executor_root' (296763) panicked at core/tests/suite/remote_env.rs:2340:5"
+        },
+        {
+          "name": "suite::remote_env::shared_executor_keeps_ready_capability_roots_scoped_to_each_attachment",
+          "type": "test failure with exit code 101",
+          "message": "Error: exec_command should be available"
+        },
+        {
+          "name": "suite::remote_env::step_world_state_gates_deferred_prompt_independently_of_host_config",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::remote_env::step_world_state_gates_deferred_prompt_independently_of_host_config' (297230) panicked at core/tests/suite/remote_env.rs:850:13"
+        },
+        {
+          "name": "suite::remote_env::future_pending_environment_can_finish_without_retargeting_the_active_turn",
+          "type": "test failure with exit code 101",
+          "message": "Error: expected value at line 1 column 1"
+        },
+        {
+          "name": "suite::abort_tasks::interrupt_long_running_tool_emits_turn_aborted",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::abort_tasks::interrupt_long_running_tool_emits_turn_aborted' (273408) panicked at core/tests/common/lib.rs:388:14"
+        },
+        {
+          "name": "suite::scenarios::app_tool_exposure_request_history",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::scenarios::app_tool_exposure_request_history' (299500) panicked at core/tests/suite/app_tool_exposure.rs:222:5"
+        },
+        {
+          "name": "suite::shell_snapshot::shell_snapshot_v2_guardian_uses_its_resolved_permissions_and_tools::read_only_reviewer",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::shell_snapshot::shell_snapshot_v2_guardian_uses_its_resolved_permissions_and_tools::read_only_reviewer' (300597) panicked at core/tests/suite/shell_snapshot.rs:736:5"
+        },
+        {
+          "name": "suite::remote_env::deferred_executor_spawn_agent_inherits_ready_step_environments::v1",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::remote_env::deferred_executor_spawn_agent_inherits_ready_step_environments::v1' (295542) panicked at core/tests/suite/remote_env.rs:1461:6"
+        },
+        {
+          "name": "suite::shell_snapshot::shell_snapshot_v2_guardian_uses_its_resolved_permissions_and_tools::reviewer_without_shell_tools",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::shell_snapshot::shell_snapshot_v2_guardian_uses_its_resolved_permissions_and_tools::reviewer_without_shell_tools' (300928) panicked at core/tests/suite/shell_snapshot.rs:736:5"
+        },
+        {
+          "name": "suite::remote_env::deferred_executor_spawn_agent_inherits_ready_step_environments::v2",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::remote_env::deferred_executor_spawn_agent_inherits_ready_step_environments::v2' (295663) panicked at core/tests/suite/remote_env.rs:1461:6"
+        },
+        {
+          "name": "suite::otel::handle_exec_command_user_approved_for_session_records_tool_decision",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::otel::handle_exec_command_user_approved_for_session_records_tool_decision' (290565) panicked at core/tests/common/lib.rs:388:14"
+        },
+        {
+          "name": "suite::otel::handle_exec_command_user_approved_records_tool_decision",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::otel::handle_exec_command_user_approved_records_tool_decision' (290686) panicked at core/tests/common/lib.rs:388:14"
+        },
+        {
+          "name": "suite::otel::handle_exec_command_user_denies_records_tool_decision",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::otel::handle_exec_command_user_denies_records_tool_decision' (290700) panicked at core/tests/common/lib.rs:388:14"
+        },
+        {
+          "name": "suite::shell_snapshot::unified_exec_snapshot_still_intercepts_apply_patch",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::shell_snapshot::unified_exec_snapshot_still_intercepts_apply_patch' (301548) panicked at core/tests/suite/shell_snapshot.rs:1019:5"
+        },
+        {
+          "name": "suite::pending_input::any_new_input_interrupts_sleep",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::pending_input::any_new_input_interrupts_sleep' (292048) panicked at core/tests/common/lib.rs:388:14"
+        },
+        {
+          "name": "suite::pending_input::steer_interrupts_wait_agent_and_is_sent_in_follow_up_request",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::pending_input::steer_interrupts_wait_agent_and_is_sent_in_follow_up_request' (292553) panicked at core/tests/common/lib.rs:388:14"
+        },
+        {
+          "name": "suite::spawn_agent_description::configured_agent_roles_control_spawn_agent_type::v2_exposes_agent_type_with_a_role",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::spawn_agent_description::configured_agent_roles_control_spawn_agent_type::v2_exposes_agent_type_with_a_role' (303273) panicked at core/tests/suite/spawn_agent_description.rs:331:5"
+        },
+        {
+          "name": "suite::spawn_agent_description::multi_agent_v2_cold_resume_refreshes_legacy_usage_hints_once::legacy_resume_preserves_custom_usage_hints",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::spawn_agent_description::multi_agent_v2_cold_resume_refreshes_legacy_usage_hints_once::legacy_resume_preserves_custom_usage_hints' (303356) panicked at core/tests/suite/spawn_agent_description.rs:555:9"
+        },
+        {
+          "name": "suite::spawn_agent_description::multi_agent_v2_cold_resume_refreshes_legacy_usage_hints_once::legacy_resume_preserves_unchanged_custom_usage_hints",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::spawn_agent_description::multi_agent_v2_cold_resume_refreshes_legacy_usage_hints_once::legacy_resume_preserves_unchanged_custom_usage_hints' (303486) panicked at core/tests/suite/spawn_agent_description.rs:555:9"
+        },
+        {
+          "name": "suite::spawn_agent_description::multi_agent_v2_cold_resume_refreshes_legacy_usage_hints_once::legacy_resume_restores_default_wait_guidance",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::spawn_agent_description::multi_agent_v2_cold_resume_refreshes_legacy_usage_hints_once::legacy_resume_restores_default_wait_guidance' (303589) panicked at core/tests/suite/spawn_agent_description.rs:555:9"
+        },
+        {
+          "name": "suite::spawn_agent_description::multi_agent_v2_resume_refreshes_changed_wait_guidance::disabled_wait_agent_invalidates_prior_guidance",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::spawn_agent_description::multi_agent_v2_resume_refreshes_changed_wait_guidance::disabled_wait_agent_invalidates_prior_guidance' (304156) panicked at core/tests/suite/spawn_agent_description.rs:605:5"
+        },
+        {
+          "name": "suite::prompt_cache_key::api_key_subagent_uses_session_id_as_prompt_cache_key",
+          "type": "test failure with exit code 101",
+          "message": "Error: timed out waiting for the child request"
+        },
+        {
+          "name": "suite::spawn_agent_description::multi_agent_v2_wait_agent_tool_follows_configuration::wait_agent_can_be_disabled_with_clock_sleep",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::spawn_agent_description::multi_agent_v2_wait_agent_tool_follows_configuration::wait_agent_can_be_disabled_with_clock_sleep' (304369) panicked at core/tests/suite/spawn_agent_description.rs:742:5"
+        },
+        {
+          "name": "suite::spawn_agent_description::multi_agent_v2_wait_agent_tool_follows_configuration::wait_agent_can_be_disabled_without_clock_sleep",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::spawn_agent_description::multi_agent_v2_wait_agent_tool_follows_configuration::wait_agent_can_be_disabled_without_clock_sleep' (304375) panicked at core/tests/suite/spawn_agent_description.rs:742:5"
+        },
+        {
+          "name": "suite::spawn_agent_description::multi_agent_v2_wait_agent_tool_follows_configuration::wait_agent_remains_available_with_clock_sleep",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::spawn_agent_description::multi_agent_v2_wait_agent_tool_follows_configuration::wait_agent_remains_available_with_clock_sleep' (304524) panicked at core/tests/suite/spawn_agent_description.rs:742:5"
+        },
+        {
+          "name": "suite::spawn_agent_description::multi_agent_v2_resume_refreshes_changed_wait_guidance::enabled_wait_agent_adds_current_guidance",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::spawn_agent_description::multi_agent_v2_resume_refreshes_changed_wait_guidance::enabled_wait_agent_adds_current_guidance' (304259) panicked at core/tests/suite/spawn_agent_description.rs:689:9"
+        },
+        {
+          "name": "suite::spawn_agent_description::multi_agent_v2_wait_guidance_uses_overridable_developer_instructions::custom_developer_instructions_replace_wait_guidance",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::spawn_agent_description::multi_agent_v2_wait_guidance_uses_overridable_developer_instructions::custom_developer_instructions_replace_wait_guidance' (304636) panicked at core/tests/suite/spawn_agent_description.rs:379:10"
+        },
+        {
+          "name": "suite::spawn_agent_description::multi_agent_v2_wait_agent_tool_follows_configuration::wait_agent_remains_available_without_clock_sleep",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::spawn_agent_description::multi_agent_v2_wait_agent_tool_follows_configuration::wait_agent_remains_available_without_clock_sleep' (304621) panicked at core/tests/suite/spawn_agent_description.rs:742:5"
+        },
+        {
+          "name": "suite::spawn_agent_description::multi_agent_v2_wait_guidance_uses_overridable_developer_instructions::default_developer_instructions_include_wait_guidance",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::spawn_agent_description::multi_agent_v2_wait_guidance_uses_overridable_developer_instructions::default_developer_instructions_include_wait_guidance' (304813) panicked at core/tests/suite/spawn_agent_description.rs:379:10"
+        },
+        {
+          "name": "suite::spawn_agent_description::spawn_agent_description_lists_visible_models_and_reasoning_efforts",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::spawn_agent_description::spawn_agent_description_lists_visible_models_and_reasoning_efforts' (304838) panicked at core/tests/suite/spawn_agent_description.rs:223:40"
+        },
+        {
+          "name": "suite::sqlite_state::backfill_scans_existing_rollouts",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::sqlite_state::backfill_scans_existing_rollouts' (304972) panicked at core/tests/suite/sqlite_state.rs:504:29"
+        },
+        {
+          "name": "suite::remote_env::settings_update_does_not_retarget_active_turn_environment",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::remote_env::settings_update_does_not_retarget_active_turn_environment' (297183) panicked at core/tests/common/lib.rs:388:14"
+        },
+        {
+          "name": "suite::rmcp_client::openai_form_capability_is_advertised_to_mcp_servers",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::rmcp_client::openai_form_capability_is_advertised_to_mcp_servers' (298559) panicked at core/tests/common/lib.rs:388:14"
+        },
+        {
+          "name": "suite::rmcp_client::openai_form_capability_is_not_advertised_by_default",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::rmcp_client::openai_form_capability_is_not_advertised_by_default' (298601) panicked at core/tests/common/lib.rs:388:14"
+        },
+        {
+          "name": "suite::subagent_notifications::multi_agent_v2_spawn_sends_agent_message_to_child::encrypted",
+          "type": "test failure with exit code 101",
+          "message": "Error: timed out waiting for child agent message request"
+        },
+        {
+          "name": "suite::subagent_notifications::multi_agent_v2_spawn_sends_agent_message_to_child::legacy_encrypted_leaf",
+          "type": "test failure with exit code 101",
+          "message": "Error: timed out waiting for child agent message request"
+        },
+        {
+          "name": "suite::shell_snapshot::linux_unified_exec_uses_shell_snapshot",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::shell_snapshot::linux_unified_exec_uses_shell_snapshot' (300380) panicked at core/tests/common/lib.rs:388:14"
+        },
+        {
+          "name": "suite::shell_snapshot::shell_snapshot_v2_filters_profile_secrets_without_creating_files",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::shell_snapshot::shell_snapshot_v2_filters_profile_secrets_without_creating_files' (300578) panicked at core/tests/common/lib.rs:388:14"
+        },
+        {
+          "name": "suite::subagent_notifications::multi_agent_v2_spawn_sends_agent_message_to_child::luna_encrypted_leaf",
+          "type": "test failure with exit code 101",
+          "message": "Error: timed out waiting for child agent message request"
+        },
+        {
+          "name": "suite::subagent_notifications::multi_agent_v2_spawn_sends_agent_message_to_child::plaintext",
+          "type": "test failure with exit code 101",
+          "message": "Error: timed out waiting for child agent message request"
+        },
+        {
+          "name": "suite::subagent_notifications::plaintext_multi_agent_v2_completion_sends_agent_message::completed_legacy",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::subagent_notifications::plaintext_multi_agent_v2_completion_sends_agent_message::completed_legacy' (310419) panicked at core/tests/suite/subagent_notifications.rs:2601:9"
+        },
+        {
+          "name": "suite::subagent_notifications::plaintext_multi_agent_v2_completion_sends_agent_message::completed_paginated",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::subagent_notifications::plaintext_multi_agent_v2_completion_sends_agent_message::completed_paginated' (310730) panicked at core/tests/suite/subagent_notifications.rs:2601:9"
+        },
+        {
+          "name": "suite::subagent_notifications::plaintext_multi_agent_v2_completion_sends_agent_message::terminal_error",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::subagent_notifications::plaintext_multi_agent_v2_completion_sends_agent_message::terminal_error' (310969) panicked at core/tests/suite/subagent_notifications.rs:2601:9"
+        },
+        {
+          "name": "suite::turn_input_submission::daemon_recovery_includes_local_environment_that_finished_starting",
+          "type": "test failure with exit code 101",
+          "message": "Error: expected value at line 1 column 1"
+        },
+        {
+          "name": "suite::shell_snapshot::unified_exec_snapshot_preserves_shell_environment_policy_set",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::shell_snapshot::unified_exec_snapshot_preserves_shell_environment_policy_set' (301533) panicked at core/tests/common/lib.rs:388:14"
+        },
+        {
+          "name": "suite::unified_exec_process_events::exec_command_consumes_pushed_remote_process_events::foreign_windows_direct_patch_denial_approval_retries_unsandboxed",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::unified_exec_process_events::exec_command_consumes_pushed_remote_process_events::foreign_windows_direct_patch_denial_approval_retries_unsandboxed' (317492) panicked at core/tests/suite/unified_exec_process_events.rs:852:9"
+        },
+        {
+          "name": "suite::unified_exec_process_events::exec_command_consumes_pushed_remote_process_events::foreign_windows_direct_patch_denial_requests_approval",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::unified_exec_process_events::exec_command_consumes_pushed_remote_process_events::foreign_windows_direct_patch_denial_requests_approval' (317774) panicked at core/tests/suite/unified_exec_process_events.rs:852:9"
+        },
+        {
+          "name": "suite::unified_exec_process_events::exec_command_consumes_pushed_remote_process_events::foreign_windows_direct_patch_is_sandboxed",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::unified_exec_process_events::exec_command_consumes_pushed_remote_process_events::foreign_windows_direct_patch_is_sandboxed' (318002) panicked at core/tests/suite/unified_exec_process_events.rs:895:9"
+        },
+        {
+          "name": "suite::unified_exec_process_events::exec_command_consumes_pushed_remote_process_events::foreign_windows_full_disk_intercepted_patch_succeeds",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::unified_exec_process_events::exec_command_consumes_pushed_remote_process_events::foreign_windows_full_disk_intercepted_patch_succeeds' (318154) panicked at core/tests/suite/unified_exec_process_events.rs:940:9"
+        },
+        {
+          "name": "suite::unified_exec_process_events::exec_command_consumes_pushed_remote_process_events::foreign_windows_intercepted_patch_is_sandboxed",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::unified_exec_process_events::exec_command_consumes_pushed_remote_process_events::foreign_windows_intercepted_patch_is_sandboxed' (318255) panicked at core/tests/suite/unified_exec_process_events.rs:895:9"
+        },
+        {
+          "name": "suite::remote_env::deferred_executor_promotes_primary_environment_when_startup_completes",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::remote_env::deferred_executor_promotes_primary_environment_when_startup_completes' (295533) panicked at core/tests/common/lib.rs:388:14"
+        },
+        {
+          "name": "suite::unified_exec_process_events::exec_command_consumes_pushed_remote_process_events::foreign_windows_unsandboxed_intercepted_patch_succeeds",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::unified_exec_process_events::exec_command_consumes_pushed_remote_process_events::foreign_windows_unsandboxed_intercepted_patch_succeeds' (318867) panicked at core/tests/suite/unified_exec_process_events.rs:940:9"
+        },
+        {
+          "name": "suite::shell_snapshot::shell_snapshot_v2_prewarm_preserves_the_sandbox",
+          "type": "test failure with exit code 101",
+          "message": "Error: timed out waiting for file /tmp/.tmptw0HUm/captures"
+        },
+        {
+          "name": "suite::shell_snapshot::shell_snapshot_v2_prewarm_stops_on_shutdown",
+          "type": "test failure with exit code 101",
+          "message": "Error: timed out waiting for file /tmp/.tmpePymWx/captures"
+        },
+        {
+          "name": "suite::shell_snapshot::shell_snapshot_v2_recovers_after_failed_prewarm",
+          "type": "test failure with exit code 101",
+          "message": "Error: timed out waiting for file /tmp/.tmpVvdRts/failed"
+        },
+        {
+          "name": "suite::step_settings::new_context_after_model_switch_uses_captured_extension_window",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::step_settings::new_context_after_model_switch_uses_captured_extension_window' (306348) panicked at core/tests/common/lib.rs:388:14"
+        },
+        {
+          "name": "suite::unified_exec_process_events::exec_command_consumes_pushed_remote_process_events::remote_windows_dangerous_command_rejection_is_bounded",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::unified_exec_process_events::exec_command_consumes_pushed_remote_process_events::remote_windows_dangerous_command_rejection_is_bounded' (319235) panicked at core/tests/suite/unified_exec_process_events.rs:843:9"
+        },
+        {
+          "name": "suite::shell_snapshot::shell_snapshot_v2_warms_after_hooks_without_blocking_the_model",
+          "type": "test failure with exit code 101",
+          "message": "Error: timed out waiting for file /tmp/.tmpNLSIrr/captures"
+        },
+        {
+          "name": "suite::unified_exec_process_events::exec_command_consumes_pushed_remote_process_events::complete_event_stream",
+          "type": "test failure with exit code 101",
+          "message": "Error: fake exec-server should observe process cleanup"
+        },
+        {
+          "name": "suite::unified_exec_process_events::exec_command_consumes_pushed_remote_process_events::disabled_managed_network_omits_executor_proxy_launch",
+          "type": "test failure with exit code 101",
+          "message": "Error: fake exec-server should observe process cleanup"
+        },
+        {
+          "name": "suite::unified_exec_process_events::exec_command_consumes_pushed_remote_process_events::direct_sandbox_denial",
+          "type": "test failure with exit code 101",
+          "message": "Error: fake exec-server should observe process cleanup"
+        },
+        {
+          "name": "suite::unified_exec_process_events::network_approval_completion::remote_local_binding_policy_and_review_cleanup::mxc_rejects_false",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::unified_exec_process_events::network_approval_completion::remote_local_binding_policy_and_review_cleanup::mxc_rejects_false' (320444) panicked at core/tests/suite/network_approval_completion.rs:237:9"
+        },
+        {
+          "name": "suite::unified_exec_process_events::exec_command_consumes_pushed_remote_process_events::foreign_windows_workspace_sandbox",
+          "type": "test failure with exit code 101",
+          "message": "Error: fake exec-server should observe process cleanup"
+        },
+        {
+          "name": "suite::unified_exec_process_events::exec_command_consumes_pushed_remote_process_events::legacy_exit_metadata",
+          "type": "test failure with exit code 101",
+          "message": "Error: fake exec-server should observe process cleanup"
+        },
+        {
+          "name": "suite::user_shell_cmd::user_shell_command_does_not_set_network_sandbox_env_var",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::user_shell_cmd::user_shell_command_does_not_set_network_sandbox_env_var' (321663) panicked at core/tests/suite/user_shell_cmd.rs:523:5"
+        },
+        {
+          "name": "suite::unified_exec_process_events::exec_command_consumes_pushed_remote_process_events::truncated_event_replay",
+          "type": "test failure with exit code 101",
+          "message": "Error: fake exec-server should observe process cleanup"
+        },
+        {
+          "name": "suite::unified_exec_process_events::exec_command_consumes_pushed_remote_process_events::windows_elevated_powershell_disables_profile",
+          "type": "test failure with exit code 101",
+          "message": "Error: fake exec-server should observe process cleanup"
+        },
+        {
+          "name": "suite::workspace_roots::workspace_roots_allow_file_and_command_writes",
+          "type": "test failure with exit code 101",
+          "message": "Error: No such file or directory (os error 2)"
+        },
+        {
+          "name": "suite::workspace_roots::workspace_roots_allow_file_and_command_writes_in_secondary_root::thread_owned_secondary_root",
+          "type": "test failure with exit code 101",
+          "message": "Error: No such file or directory (os error 2)"
+        },
+        {
+          "name": "suite::workspace_roots::workspace_roots_allow_file_and_command_writes_in_secondary_root::owner_resolved_secondary_root",
+          "type": "test failure with exit code 101",
+          "message": "Error: No such file or directory (os error 2)"
+        },
+        {
+          "name": "suite::workspace_roots::workspace_roots_allow_patches_but_protect_metadata_directories",
+          "type": "test failure with exit code 101",
+          "message": "Error: No such file or directory (os error 2)"
+        },
+        {
+          "name": "suite::workspace_roots::workspace_roots_deny_file_and_command_writes_outside_roots",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::workspace_roots::workspace_roots_deny_file_and_command_writes_outside_roots' (322702) panicked at core/tests/suite/workspace_roots.rs:473:5"
+        },
+        {
+          "name": "suite::unified_exec_process_events::exec_command_consumes_pushed_remote_process_events::foreign_windows_managed_network_preserves_approval_registration",
+          "type": "test failure with exit code 101",
+          "message": "Error: fake exec-server should observe process cleanup"
+        },
+        {
+          "name": "suite::unified_exec_process_events::exec_command_consumes_pushed_remote_process_events::managed_network_uses_executor_proxy_launch",
+          "type": "test failure with exit code 101",
+          "message": "Error: fake exec-server should observe process cleanup"
+        },
+        {
+          "name": "suite::unified_exec_process_events::exec_command_consumes_pushed_remote_process_events::strict_managed_allowlist_omits_policy_callbacks",
+          "type": "test failure with exit code 101",
+          "message": "Error: fake exec-server should observe process cleanup"
+        },
+        {
+          "name": "suite::user_shell_cmd::user_shell_command_does_not_replace_active_turn",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::user_shell_cmd::user_shell_command_does_not_replace_active_turn' (321628) panicked at core/tests/common/lib.rs:388:14"
+        },
+        {
+          "name": "suite::unified_exec_process_events::network_approval_completion::remote_local_binding_policy_and_review_cleanup::explicit_local_binding",
+          "type": "test failure with exit code 101",
+          "message": "Error: command should complete"
+        },
+        {
+          "name": "suite::unified_exec_process_events::network_approval_completion::remote_local_binding_policy_and_review_cleanup::mxc_default_local_binding",
+          "type": "test failure with exit code 101",
+          "message": "Error: command should complete"
+        },
+        {
+          "name": "suite::unified_exec_process_events::network_approval_completion::remote_local_binding_policy_and_review_cleanup::non_mxc_default_local_binding",
+          "type": "test failure with exit code 101",
+          "message": "Error: command should complete"
+        },
+        {
+          "name": "suite::agent_execution::v2_residency_reload_preserves_inherited_environment_and_tools::owner_preserves_stricter_child",
+          "type": "test timeout",
+          "message": null
+        },
+        {
+          "name": "suite::agent_execution::v2_residency_reload_preserves_inherited_environment_and_tools::owner_narrows_cached_permissions",
+          "type": "test timeout",
+          "message": null
+        },
+        {
+          "name": "suite::agent_execution::v2_residency_reload_preserves_inherited_environment_and_tools::owner_revokes_cached_workspace_root",
+          "type": "test timeout",
+          "message": null
+        },
+        {
+          "name": "suite::agent_execution::v2_residency_reload_preserves_inherited_environment_and_tools::sender_preserves_stricter_child",
+          "type": "test timeout",
+          "message": null
+        },
+        {
+          "name": "suite::cyber_access_program::cyber_access_program_is_inherited_by_child_turns",
+          "type": "test timeout",
+          "message": null
+        },
+        {
+          "name": "suite::subagent_notifications::multi_agent_v2_peer_followup_completion_notifies_initiating_turn",
+          "type": "test timeout",
+          "message": null
+        },
+        {
+          "name": "suite::subagent_service_tier::evicted_role_subagent_uses_root_service_tier_after_reload",
+          "type": "test timeout",
+          "message": null
+        },
+        {
+          "name": "suite::subagent_service_tier::root_service_tier_change_updates_existing_subagent::disabling_fast_mode_updates_active_and_idle_child_work",
+          "type": "test timeout",
+          "message": null
+        },
+        {
+          "name": "suite::subagent_service_tier::root_service_tier_change_updates_existing_subagent::enabling_fast_mode_updates_active_and_idle_child_work",
+          "type": "test timeout",
+          "message": null
+        },
+        {
+          "name": "suite::subagent_service_tier::root_service_tier_change_updates_existing_subagent::explicit_default_updates_active_and_idle_child_work",
+          "type": "test timeout",
+          "message": null
+        }
+      ]
+    },
+    {
+      "suite": "codex-exec-server::exec_process",
+      "tests": 41,
+      "failures": [
+        {
+          "name": "shell_snapshot_v2_filters_profile_exports_and_stays_in_memory::remote_sandbox",
+          "type": "test failure with exit code 101",
+          "message": "thread 'shell_snapshot_v2_filters_profile_exports_and_stays_in_memory::remote_sandbox' (348435) panicked at exec-server/tests/exec_process.rs:360:9"
+        },
+        {
+          "name": "shell_snapshot_v2_capture_failure_falls_back_and_retries::remote_pipe_recovery",
+          "type": "test failure with exit code 101",
+          "message": "thread 'shell_snapshot_v2_capture_failure_falls_back_and_retries::remote_pipe_recovery' (347845) panicked at exec-server/tests/exec_process.rs:569:5"
+        },
+        {
+          "name": "shell_snapshot_v2_capture_failure_falls_back_and_retries::remote_tty_recovery",
+          "type": "test failure with exit code 101",
+          "message": "thread 'shell_snapshot_v2_capture_failure_falls_back_and_retries::remote_tty_recovery' (347973) panicked at exec-server/tests/exec_process.rs:569:5"
+        }
+      ]
+    },
+    {
+      "suite": "codex-http-client",
+      "tests": 98,
+      "failures": [
+        {
+          "name": "route_aware_client_pool::tests::request_failures_classify_real_untrusted_certificate_handshakes",
+          "type": "test failure with exit code 101",
+          "message": "thread 'route_aware_client_pool::tests::request_failures_classify_real_untrusted_certificate_handshakes' (360955) panicked at http-client/src/route_aware_client_pool_tests.rs:67:5"
+        },
+        {
+          "name": "route_aware_client_pool::tls_fallback_tests::does_not_retry_a_non_replayable_streaming_request",
+          "type": "test failure with exit code 101",
+          "message": "thread 'route_aware_client_pool::tls_fallback_tests::does_not_retry_a_non_replayable_streaming_request' (361106) panicked at http-client/src/route_aware_tls_fallback_tests.rs:324:5"
+        },
+        {
+          "name": "route_aware_client_pool::tls_fallback_tests::retries_a_native_tls_protocol_failure_once_with_rustls",
+          "type": "test failure with exit code 101",
+          "message": "thread 'route_aware_client_pool::tls_fallback_tests::retries_a_native_tls_protocol_failure_once_with_rustls' (361140) panicked at http-client/src/route_aware_tls_fallback_tests.rs:84:5"
+        },
+        {
+          "name": "route_aware_client_pool::tls_fallback_tests::retries_a_tls_protocol_failure_when_request_url_contains_certificate_markers",
+          "type": "test failure with exit code 101",
+          "message": "thread 'route_aware_client_pool::tls_fallback_tests::retries_a_tls_protocol_failure_when_request_url_contains_certificate_markers' (361147) panicked at http-client/src/route_aware_tls_fallback_tests.rs:283:5"
+        },
+        {
+          "name": "route_aware_client_pool::tls_fallback_tests::retries_a_native_tls_failure_after_another_request_caches_rustls",
+          "type": "test failure with exit code 101",
+          "message": "thread 'route_aware_client_pool::tls_fallback_tests::retries_a_native_tls_failure_after_another_request_caches_rustls' (361119) panicked at http-client/src/route_aware_tls_fallback_tests.rs:151:5"
+        },
+        {
+          "name": "route_aware_client_pool::tls_fallback_tests::successful_rustls_fallback_replays_the_request_and_reuses_the_destination",
+          "type": "test failure with exit code 101",
+          "message": "thread 'route_aware_client_pool::tls_fallback_tests::successful_rustls_fallback_replays_the_request_and_reuses_the_destination' (361169) panicked at http-client/src/route_aware_tls_fallback_tests.rs:228:10"
+        }
+      ]
+    },
+    {
+      "suite": "codex-history-notes-extension::image_model_input",
+      "tests": 1,
+      "failures": [
+        {
+          "name": "history_images_reach_the_next_model_request",
+          "type": "test failure with exit code 101",
+          "message": "thread 'history_images_reach_the_next_model_request' (359712) panicked at ext/history-notes/tests/image_model_input.rs:84:5"
+        }
+      ]
+    },
+    {
+      "suite": "codex-linux-sandbox",
+      "tests": 151,
+      "failures": [
+        {
+          "name": "bwrap::tests::missing_child_git_under_parent_repo_is_mounted_read_only",
+          "type": "test failure with exit code 101",
+          "message": "thread 'bwrap::tests::missing_child_git_under_parent_repo_is_mounted_read_only' (361481) panicked at linux-sandbox/src/bwrap.rs:1967:14"
+        },
+        {
+          "name": "bwrap::tests::missing_project_root_metadata_carveouts_use_metadata_path_masks",
+          "type": "test failure with exit code 101",
+          "message": "thread 'bwrap::tests::missing_project_root_metadata_carveouts_use_metadata_path_masks' (361483) panicked at linux-sandbox/src/bwrap.rs:2093:14"
+        },
+        {
+          "name": "bwrap::tests::ignores_missing_writable_roots",
+          "type": "test failure with exit code 101",
+          "message": "thread 'bwrap::tests::ignores_missing_writable_roots' (361479) panicked at linux-sandbox/src/bwrap.rs:2035:14"
+        },
+        {
+          "name": "bwrap::tests::missing_read_only_subpath_uses_empty_file_bind_data",
+          "type": "test failure with exit code 101",
+          "message": "thread 'bwrap::tests::missing_read_only_subpath_uses_empty_file_bind_data' (361489) panicked at linux-sandbox/src/bwrap.rs:1881:14"
+        },
+        {
+          "name": "bwrap::tests::read_only_tmp_carveout_keeps_daemon_sockets_masked",
+          "type": "test failure with exit code 101",
+          "message": "thread 'bwrap::tests::read_only_tmp_carveout_keeps_daemon_sockets_masked' (361509) panicked at linux-sandbox/src/bwrap.rs:2276:14"
+        },
+        {
+          "name": "bwrap::tests::missing_user_project_root_subpath_rules_are_still_enforced",
+          "type": "test failure with exit code 101",
+          "message": "thread 'bwrap::tests::missing_user_project_root_subpath_rules_are_still_enforced' (361510) panicked at linux-sandbox/src/bwrap.rs:2148:14"
+        },
+        {
+          "name": "bwrap::tests::protected_symlinked_directory_subpaths_fail_closed",
+          "type": "test failure with exit code 101",
+          "message": "thread 'bwrap::tests::protected_symlinked_directory_subpaths_fail_closed' (361512) panicked at linux-sandbox/src/bwrap.rs:1769:9"
+        },
+        {
+          "name": "bwrap::tests::registry_protection_precedes_denied_parent_mask",
+          "type": "test failure with exit code 101",
+          "message": "thread 'bwrap::tests::registry_protection_precedes_denied_parent_mask' (361519) panicked at linux-sandbox/src/bwrap.rs:1840:14"
+        },
+        {
+          "name": "bwrap::tests::mounts_dev_before_writable_dev_binds",
+          "type": "test failure with exit code 101",
+          "message": "thread 'bwrap::tests::mounts_dev_before_writable_dev_binds' (361511) panicked at linux-sandbox/src/bwrap.rs:2165:14"
+        },
+        {
+          "name": "bwrap::tests::restricted_read_only_with_platform_defaults_includes_usr_when_present",
+          "type": "test failure with exit code 101",
+          "message": "thread 'bwrap::tests::restricted_read_only_with_platform_defaults_includes_usr_when_present' (361546) panicked at linux-sandbox/src/bwrap.rs:2339:14"
+        },
+        {
+          "name": "bwrap::tests::restricted_policy_chdirs_to_canonical_command_cwd",
+          "type": "test failure with exit code 101",
+          "message": "thread 'bwrap::tests::restricted_policy_chdirs_to_canonical_command_cwd' (361543) panicked at linux-sandbox/src/bwrap.rs:1616:10"
+        },
+        {
+          "name": "bwrap::tests::root_prefix_unreadable_globs_fail_closed_on_linux",
+          "type": "test failure with exit code 101",
+          "message": "thread 'bwrap::tests::root_prefix_unreadable_globs_fail_closed_on_linux' (361545) panicked at linux-sandbox/src/bwrap.rs:2837:9"
+        },
+        {
+          "name": "bwrap::tests::restricted_read_only_uses_scoped_read_roots_instead_of_erroring",
+          "type": "test failure with exit code 101",
+          "message": "thread 'bwrap::tests::restricted_read_only_uses_scoped_read_roots_instead_of_erroring' (361547) panicked at linux-sandbox/src/bwrap.rs:2312:14"
+        },
+        {
+          "name": "bwrap::tests::split_policy_masks_root_read_directory_carveouts",
+          "type": "test failure with exit code 101",
+          "message": "thread 'bwrap::tests::split_policy_masks_root_read_directory_carveouts' (361549) panicked at linux-sandbox/src/bwrap.rs:2699:14"
+        },
+        {
+          "name": "bwrap::tests::split_policy_reapplies_unreadable_carveouts_after_writable_binds",
+          "type": "test failure with exit code 101",
+          "message": "thread 'bwrap::tests::split_policy_reapplies_unreadable_carveouts_after_writable_binds' (361584) panicked at linux-sandbox/src/bwrap.rs:2380:14"
+        },
+        {
+          "name": "bwrap::tests::split_policy_masks_root_read_file_carveouts",
+          "type": "test failure with exit code 101",
+          "message": "thread 'bwrap::tests::split_policy_masks_root_read_file_carveouts' (361583) panicked at linux-sandbox/src/bwrap.rs:2742:14"
+        },
+        {
+          "name": "bwrap::tests::split_policy_reenables_writable_files_after_unreadable_parent",
+          "type": "test failure with exit code 101",
+          "message": "thread 'bwrap::tests::split_policy_reenables_writable_files_after_unreadable_parent' (361588) panicked at linux-sandbox/src/bwrap.rs:2576:14"
+        },
+        {
+          "name": "bwrap::tests::split_policy_reenables_nested_writable_roots_after_unreadable_parent",
+          "type": "test failure with exit code 101",
+          "message": "thread 'bwrap::tests::split_policy_reenables_nested_writable_roots_after_unreadable_parent' (361582) panicked at linux-sandbox/src/bwrap.rs:2653:14"
+        },
+        {
+          "name": "bwrap::tests::split_policy_reenables_nested_writable_subpaths_after_read_only_parent",
+          "type": "test failure with exit code 101",
+          "message": "thread 'bwrap::tests::split_policy_reenables_nested_writable_subpaths_after_read_only_parent' (361585) panicked at linux-sandbox/src/bwrap.rs:2457:14"
+        },
+        {
+          "name": "bwrap::tests::full_disk_write_with_unreadable_glob_still_wraps_and_masks_match",
+          "type": "test failure with exit code 101",
+          "message": "thread 'bwrap::tests::full_disk_write_with_unreadable_glob_still_wraps_and_masks_match' (361480) panicked at linux-sandbox/src/bwrap.rs:1566:10"
+        },
+        {
+          "name": "bwrap::tests::split_policy_reenables_writable_subpaths_after_unreadable_parent",
+          "type": "test failure with exit code 101",
+          "message": "thread 'bwrap::tests::split_policy_reenables_writable_subpaths_after_unreadable_parent' (361606) panicked at linux-sandbox/src/bwrap.rs:2509:14"
+        },
+        {
+          "name": "bwrap::tests::symlinked_writable_roots_nested_symlink_escape_paths_fail_closed",
+          "type": "test failure with exit code 101",
+          "message": "thread 'bwrap::tests::symlinked_writable_roots_nested_symlink_escape_paths_fail_closed' (361607) panicked at linux-sandbox/src/bwrap.rs:1811:9"
+        },
+        {
+          "name": "bwrap::tests::symlinked_missing_child_git_under_parent_repo_mounts_effective_path_read_only",
+          "type": "test failure with exit code 101",
+          "message": "thread 'bwrap::tests::symlinked_missing_child_git_under_parent_repo_mounts_effective_path_read_only' (361608) panicked at linux-sandbox/src/bwrap.rs:2004:14"
+        },
+        {
+          "name": "bwrap::tests::transient_empty_preserved_file_uses_empty_file_bind_data",
+          "type": "test failure with exit code 101",
+          "message": "thread 'bwrap::tests::transient_empty_preserved_file_uses_empty_file_bind_data' (361610) panicked at linux-sandbox/src/bwrap.rs:1920:14"
+        },
+        {
+          "name": "bwrap::tests::symlinked_writable_roots_bind_real_target_and_remap_carveouts",
+          "type": "test failure with exit code 101",
+          "message": "thread 'bwrap::tests::symlinked_writable_roots_bind_real_target_and_remap_carveouts' (361609) panicked at linux-sandbox/src/bwrap.rs:1684:14"
+        },
+        {
+          "name": "bwrap::tests::writable_roots_under_symlinked_ancestors_bind_real_target",
+          "type": "test failure with exit code 101",
+          "message": "thread 'bwrap::tests::writable_roots_under_symlinked_ancestors_bind_real_target' (361633) panicked at linux-sandbox/src/bwrap.rs:1727:14"
+        },
+        {
+          "name": "bwrap::wslg_tests::wslg_mask_is_omitted_when_policy_already_hides_an_ancestor",
+          "type": "test failure with exit code 101",
+          "message": "thread 'bwrap::wslg_tests::wslg_mask_is_omitted_when_policy_already_hides_an_ancestor' (361659) panicked at linux-sandbox/src/bwrap_wslg_tests.rs:112:18"
+        },
+        {
+          "name": "bwrap::tests::unreadable_globs_add_canonical_targets_for_symlink_matches",
+          "type": "test failure with exit code 101",
+          "message": "thread 'bwrap::tests::unreadable_globs_add_canonical_targets_for_symlink_matches' (361619) panicked at linux-sandbox/src/bwrap.rs:2820:10"
+        },
+        {
+          "name": "bwrap::tests::unreadable_globs_expand_existing_matches_with_configured_depth",
+          "type": "test failure with exit code 101",
+          "message": "thread 'bwrap::tests::unreadable_globs_expand_existing_matches_with_configured_depth' (361630) panicked at linux-sandbox/src/bwrap.rs:2781:10"
+        },
+        {
+          "name": "linux_run_main::tests::inserts_unshare_net_when_proxy_only_network_mode_requested",
+          "type": "test failure with exit code 101",
+          "message": "thread 'linux_run_main::tests::inserts_unshare_net_when_proxy_only_network_mode_requested' (361945) panicked at linux-sandbox/src/linux_run_main_tests.rs:213:6"
+        },
+        {
+          "name": "linux_run_main::tests::inserts_bwrap_argv0_before_command_separator",
+          "type": "test failure with exit code 101",
+          "message": "thread 'linux_run_main::tests::inserts_bwrap_argv0_before_command_separator' (361942) panicked at linux-sandbox/src/linux_run_main_tests.rs:68:6"
+        },
+        {
+          "name": "linux_run_main::tests::inserts_unshare_net_when_network_isolation_requested",
+          "type": "test failure with exit code 101",
+          "message": "thread 'linux_run_main::tests::inserts_unshare_net_when_network_isolation_requested' (361949) panicked at linux-sandbox/src/linux_run_main_tests.rs:194:6"
+        },
+        {
+          "name": "linux_run_main::tests::managed_proxy_preflight_argv_unshares_network",
+          "type": "test failure with exit code 101",
+          "message": "thread 'linux_run_main::tests::managed_proxy_preflight_argv_unshares_network' (361959) panicked at linux-sandbox/src/linux_run_main_tests.rs:333:6"
+        },
+        {
+          "name": "linux_run_main::tests::masks_wsl_interop_with_full_network_and_restricted_filesystem",
+          "type": "test failure with exit code 101",
+          "message": "thread 'linux_run_main::tests::masks_wsl_interop_with_full_network_and_restricted_filesystem' (361970) panicked at linux-sandbox/src/linux_run_main_tests.rs:231:6"
+        },
+        {
+          "name": "linux_run_main::tests::masks_inherited_procfs_when_wsl_interop_is_masked_without_fresh_proc",
+          "type": "test failure with exit code 101",
+          "message": "thread 'linux_run_main::tests::masks_inherited_procfs_when_wsl_interop_is_masked_without_fresh_proc' (361969) panicked at linux-sandbox/src/linux_run_main_tests.rs:252:6"
+        },
+        {
+          "name": "linux_run_main::tests::proc_mount_preflight_does_not_bind_the_full_filesystem",
+          "type": "test failure with exit code 101",
+          "message": "thread 'linux_run_main::tests::proc_mount_preflight_does_not_bind_the_full_filesystem' (361973) panicked at linux-sandbox/src/linux_run_main_tests.rs:342:10"
+        },
+        {
+          "name": "linux_run_main::tests::rewrites_inner_command_path_when_bwrap_lacks_argv0",
+          "type": "test failure with exit code 101",
+          "message": "thread 'linux_run_main::tests::rewrites_inner_command_path_when_bwrap_lacks_argv0' (361999) panicked at linux-sandbox/src/linux_run_main_tests.rs:125:6"
+        }
+      ]
+    },
+    {
+      "suite": "codex-linux-sandbox::all",
+      "tests": 49,
+      "failures": [
+        {
+          "name": "suite::landlock::sandbox_starts_with_denied_tmp_without_exposing_registry",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::landlock::sandbox_starts_with_denied_tmp_without_exposing_registry' (362470) panicked at linux-sandbox/tests/suite/landlock.rs:1384:14"
+        },
+        {
+          "name": "suite::managed_proxy::managed_proxy_bridges_release_command_output_after_exit",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::managed_proxy::managed_proxy_bridges_release_command_output_after_exit' (362829) panicked at linux-sandbox/tests/suite/managed_proxy.rs:491:5"
+        },
+        {
+          "name": "suite::managed_proxy::managed_proxy_commands_have_a_seccomp_filtered_namespace_reaper",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::managed_proxy::managed_proxy_commands_have_a_seccomp_filtered_namespace_reaper' (362901) panicked at linux-sandbox/tests/suite/managed_proxy.rs:258:5"
+        },
+        {
+          "name": "suite::managed_proxy::managed_proxy_full_filesystem_uses_minimal_dev_nodes",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::managed_proxy::managed_proxy_full_filesystem_uses_minimal_dev_nodes' (363030) panicked at linux-sandbox/tests/suite/managed_proxy.rs:452:5"
+        },
+        {
+          "name": "suite::managed_proxy::managed_proxy_mode_denies_af_unix_socket_but_allows_socketpair",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::managed_proxy::managed_proxy_mode_denies_af_unix_socket_but_allows_socketpair' (363036) panicked at linux-sandbox/tests/suite/managed_proxy.rs:702:5"
+        },
+        {
+          "name": "suite::managed_proxy::managed_proxy_readiness_survives_closed_standard_descriptors",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::managed_proxy::managed_proxy_readiness_survives_closed_standard_descriptors' (363159) panicked at linux-sandbox/tests/suite/managed_proxy.rs:525:5"
+        },
+        {
+          "name": "suite::managed_proxy::unix_sockets::managed_proxy_allow_all_unix_sockets_preserves_network_isolation",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::managed_proxy::unix_sockets::managed_proxy_allow_all_unix_sockets_preserves_network_isolation' (363232) panicked at linux-sandbox/tests/suite/managed_proxy_unix_sockets_tests.rs:184:9"
+        },
+        {
+          "name": "suite::managed_proxy::cancelling_sandbox_closes_active_proxy_connection",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::managed_proxy::cancelling_sandbox_closes_active_proxy_connection' (362778) panicked at linux-sandbox/tests/suite/managed_proxy.rs:959:10"
+        },
+        {
+          "name": "suite::managed_proxy::handoff_isolates_concurrent_endpoints_and_closes_privileged_descriptors",
+          "type": "test failure with exit code 101",
+          "message": "thread 'suite::managed_proxy::handoff_client' (3) panicked at linux-sandbox/tests/suite/managed_proxy.rs:746:9"
+        }
+      ]
+    },
+    {
+      "suite": "codex-mcp-extension",
+      "tests": 15,
+      "failures": [
+        {
+          "name": "cloud_plugin::tests::cloud_catalog_refreshes_per_turn_and_invalidates_on_auth_change",
+          "type": "test failure with exit code 101",
+          "message": "thread 'cloud-plugin-lifecycle' (370381) panicked at ext/mcp/src/cloud_plugin_tests.rs:530:13"
+        }
+      ]
+    },
+    {
+      "suite": "codex-memories-write",
+      "tests": 50,
+      "failures": [
+        {
+          "name": "startup_tests::dual_write::dual_write_extracts_and_consolidates_into_independent_stores",
+          "type": "test failure with exit code 101",
+          "message": "thread 'startup_tests::dual_write::dual_write_extracts_and_consolidates_into_independent_stores' (371135) panicked at memories/write/src/startup_dual_write_tests.rs:73:9"
+        },
+        {
+          "name": "startup_tests::memories_startup_phase1_v2_preserves_human_evidence_and_redacts_storage",
+          "type": "test failure with exit code 101",
+          "message": "thread 'startup_tests::memories_startup_phase1_v2_preserves_human_evidence_and_redacts_storage' (371261) panicked at memories/write/src/startup_tests.rs:935:9"
+        },
+        {
+          "name": "startup_tests::memories_startup_phase2_provider_default_drives_request_model",
+          "type": "test failure with exit code 101",
+          "message": "thread 'startup_tests::memories_startup_phase2_provider_default_drives_request_model' (371441) panicked at memories/write/src/startup_tests.rs:1320:9"
+        },
+        {
+          "name": "startup_tests::memories_startup_fails_consolidation_when_worker_creates_extension_symlink",
+          "type": "test failure with exit code 101",
+          "message": "thread 'startup_tests::memories_startup_fails_consolidation_when_worker_creates_extension_symlink' (371162) panicked at memories/write/src/startup_tests.rs:1320:9"
+        },
+        {
+          "name": "startup_tests::memories_startup_phase2_prunes_old_extension_resources",
+          "type": "test failure with exit code 101",
+          "message": "thread 'startup_tests::memories_startup_phase2_prunes_old_extension_resources' (371439) panicked at memories/write/src/startup_tests.rs:1320:9"
+        },
+        {
+          "name": "startup_tests::memories_startup_phase2_prunes_old_extension_resources_without_stage1_input",
+          "type": "test failure with exit code 101",
+          "message": "thread 'startup_tests::memories_startup_phase2_prunes_old_extension_resources_without_stage1_input' (371488) panicked at memories/write/src/startup_tests.rs:1320:9"
+        },
+        {
+          "name": "startup_tests::memories_startup_phase2_scopes_stop_hooks",
+          "type": "test failure with exit code 101",
+          "message": "thread 'startup_tests::memories_startup_phase2_scopes_stop_hooks' (371673) panicked at memories/write/src/startup_tests.rs:1320:9"
+        },
+        {
+          "name": "startup_tests::memories_startup_phase2_tracks_workspace_diff_across_runs",
+          "type": "test failure with exit code 101",
+          "message": "thread 'startup_tests::memories_startup_phase2_tracks_workspace_diff_across_runs' (371970) panicked at memories/write/src/startup_tests.rs:1320:9"
+        },
+        {
+          "name": "startup_tests::memories_startup_phase2_v2_consolidates_without_a_handbook",
+          "type": "test failure with exit code 101",
+          "message": "thread 'startup_tests::memories_startup_phase2_v2_consolidates_without_a_handbook' (372016) panicked at memories/write/src/startup_tests.rs:1320:9"
+        },
+        {
+          "name": "startup_tests::memories_startup_phase1_explicit_model_override_drives_request_model",
+          "type": "test failure with exit code 101",
+          "message": "thread 'startup_tests::memories_startup_phase1_explicit_model_override_drives_request_model' (371195) panicked at memories/write/src/startup_tests.rs:1320:9"
+        },
+        {
+          "name": "startup_tests::phase2_retries_when_clean_workspace_is_missing_artifacts",
+          "type": "test failure with exit code 101",
+          "message": "thread 'startup_tests::phase2_retries_when_clean_workspace_is_missing_artifacts' (372131) panicked at memories/write/src/startup_tests.rs:1320:9"
+        }
+      ]
+    },
+    {
+      "suite": "codex-skills-extension",
+      "tests": 142,
+      "failures": [
+        {
+          "name": "host_roots::tests::repo_ancestry_without_project_marker_does_not_walk_parents",
+          "type": "test failure with exit code 101",
+          "message": "thread 'host_roots::tests::repo_ancestry_without_project_marker_does_not_walk_parents' (390956) panicked at ext/skills/src/host_roots_tests.rs:415:5"
+        }
+      ]
+    },
+    {
+      "suite": "codex-tui",
+      "tests": 5349,
+      "failures": [
+        {
+          "name": "bottom_pane::chat_composer::agents_navigation_tests::agents_navigation_hint_snapshots",
+          "type": "test failure with exit code 101",
+          "message": "thread 'bottom_pane::chat_composer::agents_navigation_tests::agents_navigation_hint_snapshots' (484091) panicked at /home/krzako/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/insta-1.46.3/src/runtime.rs:719:13"
+        },
+        {
+          "name": "bottom_pane::chat_composer::sparkle::tests::shortcut_help_hides_visible_sparkles_without_restarting_their_deadline",
+          "type": "test failure with exit code 101",
+          "message": "thread 'bottom_pane::chat_composer::sparkle::tests::shortcut_help_hides_visible_sparkles_without_restarting_their_deadline' (485140) panicked at /home/krzako/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/insta-1.46.3/src/runtime.rs:719:13"
+        },
+        {
+          "name": "bottom_pane::chat_composer::sparkle::tests::shortcut_help_preserves_an_unused_sparkle_but_literal_question_marks_do_not",
+          "type": "test failure with exit code 101",
+          "message": "thread 'bottom_pane::chat_composer::sparkle::tests::shortcut_help_preserves_an_unused_sparkle_but_literal_question_marks_do_not' (485153) panicked at /home/krzako/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/insta-1.46.3/src/runtime.rs:719:13"
+        },
+        {
+          "name": "bottom_pane::chat_composer::status_surface::tests::shortcut_help_stays_above_the_prompt_and_bottom_status",
+          "type": "test failure with exit code 101",
+          "message": "thread 'bottom_pane::chat_composer::status_surface::tests::shortcut_help_stays_above_the_prompt_and_bottom_status' (485279) panicked at /home/krzako/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/insta-1.46.3/src/runtime.rs:719:13"
+        },
+        {
+          "name": "bottom_pane::chat_composer::tests::footer_mode_snapshots",
+          "type": "test failure with exit code 101",
+          "message": "thread 'bottom_pane::chat_composer::tests::footer_mode_snapshots' (486110) panicked at /home/krzako/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/insta-1.46.3/src/runtime.rs:719:13"
+        },
+        {
+          "name": "bottom_pane::chat_composer::tests::shortcut_footer_displays_configured_chords",
+          "type": "test failure with exit code 101",
+          "message": "thread 'bottom_pane::chat_composer::tests::shortcut_footer_displays_configured_chords' (486786) panicked at /home/krzako/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/insta-1.46.3/src/runtime.rs:719:13"
+        },
+        {
+          "name": "custom_terminal::tests::cursor::terminal_draw_repairs_styled_anchor_on_cursor_only_frames",
+          "type": "test failure with exit code 101",
+          "message": "thread 'custom_terminal::tests::cursor::terminal_draw_repairs_styled_anchor_on_cursor_only_frames' (506264) panicked at tui/src/custom_terminal/tests/cursor_tests.rs:127:13"
+        },
+        {
+          "name": "custom_terminal::tests::cursor::terminal_draw_omits_cursor_style_without_an_owned_glyph",
+          "type": "test failure with exit code 101",
+          "message": "thread 'custom_terminal::tests::cursor::terminal_draw_omits_cursor_style_without_an_owned_glyph' (506252) panicked at tui/src/custom_terminal/tests/cursor_tests.rs:220:9"
+        },
+        {
+          "name": "custom_terminal::tests::cursor::terminal_draw_repairs_single_column_without_scrolling",
+          "type": "test failure with exit code 101",
+          "message": "thread 'custom_terminal::tests::cursor::terminal_draw_repairs_single_column_without_scrolling' (506226) panicked at /home/krzako/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/insta-1.46.3/src/runtime.rs:719:13"
+        },
+        {
+          "name": "custom_terminal::tests::cursor::terminal_draw_repairs_owned_wide_hyperlink_after_skipped_glyphs",
+          "type": "test failure with exit code 101",
+          "message": "thread 'custom_terminal::tests::cursor::terminal_draw_repairs_owned_wide_hyperlink_after_skipped_glyphs' (506251) panicked at /home/krzako/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/insta-1.46.3/src/runtime.rs:719:13"
+        },
+        {
+          "name": "analytics::tests::account_layout::account_reports_request_only_eligible_endpoints_and_refresh",
+          "type": "test failure with exit code 101",
+          "message": "thread 'analytics::tests::account_layout::account_reports_request_only_eligible_endpoints_and_refresh' (403847) panicked at tui/src/analytics/test_support.rs:75:6"
+        },
+        {
+          "name": "named_session_lookup::tests::uses_listed_thread_when_older_server_cannot_read_it",
+          "type": "test failure with exit code 101",
+          "message": "thread 'named_session_lookup::tests::uses_listed_thread_when_older_server_cannot_read_it' (511642) panicked at tui/src/named_session_lookup_tests.rs:513:9"
+        },
+        {
+          "name": "session_archive_commands::tests::unarchives_by_sqlite_name",
+          "type": "test failure with exit code 101",
+          "message": "Error: No archived session found matching 'saved-session'."
+        },
+        {
+          "name": "tests::fork_last_filters_latest_session_by_cwd_unless_show_all",
+          "type": "test failure with exit code 101",
+          "message": "thread 'tests::fork_last_filters_latest_session_by_cwd_unless_show_all' (520031) panicked at tui/src/lib.rs:3389:9"
+        },
+        {
+          "name": "named_session_lookup::tests::rejects_duplicate_labels_across_server_pages",
+          "type": "test failure with exit code 101",
+          "message": "thread 'named_session_lookup::tests::rejects_duplicate_labels_across_server_pages' (511640) panicked at tui/src/named_session_lookup_tests.rs:321:6"
+        },
+        {
+          "name": "analytics::tests::account_layout::unsupported_workspace_plans_hide_top_chats_and_skip_loading",
+          "type": "test failure with exit code 101",
+          "message": "thread 'analytics::tests::account_layout::unsupported_workspace_plans_hide_top_chats_and_skip_loading' (404592) panicked at tui/src/analytics/test_support.rs:75:6"
+        },
+        {
+          "name": "session_archive_commands::tests::archives_by_sqlite_name",
+          "type": "test failure with exit code 101",
+          "message": "Error: No active session found matching 'saved-session'."
+        },
+        {
+          "name": "named_session_lookup::tests::skips_stale_listed_thread_before_valid_label",
+          "type": "test failure with exit code 101",
+          "message": "Error: Cannot verify a unique session label across server pages; matching session UUID: 01a130d4-2c55-74b2-ac12-badf8eba32a4. Use it only if this is the session you want."
+        },
+        {
+          "name": "named_session_lookup::tests::resolves_name_and_preview_from_server_list",
+          "type": "test failure with exit code 101",
+          "message": "Error: Multiple sessions match 'preview text' (including 01a130d4-2c45-7162-bcbd-d0d6707ddf9d and 01a130d4-2c46-7cf0-941b-9b41db53c68a); use a session UUID to disambiguate."
+        },
+        {
+          "name": "session_archive_commands::tests::queues_non_interactive_and_custom_sessions_by_server_label",
+          "type": "test failure with exit code 101",
+          "message": "Error: No active session found matching 'saved-session'."
+        },
+        {
+          "name": "session_archive_commands::tests::trusts_sqlite_name_over_legacy_index_for_delete",
+          "type": "test failure with exit code 101",
+          "message": "thread 'session_archive_commands::tests::trusts_sqlite_name_over_legacy_index_for_delete' (514353) panicked at tui/src/session_archive_commands_tests.rs:408:5"
+        }
+      ]
+    },
+    {
+      "suite": "codex-v8-poc",
+      "tests": 6,
+      "failures": [
+        {
+          "name": "tests::sandbox_feature_matches_linked_v8",
+          "type": "test failure with exit code 101",
+          "message": "thread 'tests::sandbox_feature_matches_linked_v8' (527317) panicked at v8-poc/src/lib.rs:69:9"
+        }
+      ]
+    },
+    {
+      "suite": "codex-voice-host::bin/codex-voice-host",
+      "tests": 51,
+      "failures": [
+        {
+          "name": "devices::playout::tests::jitter_buffer_preserves_packets_delivered_in_a_burst",
+          "type": "test failure with exit code 101",
+          "message": "thread 'devices::playout::tests::jitter_buffer_preserves_packets_delivered_in_a_burst' (527460) panicked at voice-host/src/playout_tests.rs:68:47"
+        },
+        {
+          "name": "devices::playout::tests::real_decoder_renders_current_rtp_and_rejects_pre_epoch_arrivals",
+          "type": "test failure with exit code 101",
+          "message": "thread 'devices::playout::tests::real_decoder_renders_current_rtp_and_rejects_pre_epoch_arrivals' (527466) panicked at voice-host/src/playout_tests.rs:162:47"
+        }
+      ]
+    }
+  ]
+}

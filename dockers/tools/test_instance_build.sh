@@ -11,4 +11,7 @@ COMPOSE_FILE="${DSH_TEST_COMPOSE_FILE:-docker-compose.test.yml}"
 DSH_COMMIT_HASH="$(git -C "${DSH_SOURCE:-../deepseek-harness}" rev-parse HEAD 2>/dev/null || true)"
 export DSH_COMMIT_HASH
 echo "DSH commit hash: ${DSH_COMMIT_HASH:-<unset>}"
+CODEX_COMMIT_HASH="$(git -C "${CODEX_SOURCE:-addons/codex}" rev-parse HEAD 2>/dev/null || true)"
+export CODEX_COMMIT_HASH
+echo "Codex fork commit hash: ${CODEX_COMMIT_HASH:-<unset>}"
 docker compose -f "$COMPOSE_FILE" build

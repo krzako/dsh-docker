@@ -319,10 +319,11 @@ Traefik is not started automatically.
 
 ## MinIO
 
-MinIO binaries are copied from:
+MinIO binaries are built from pinned upstream source releases during the Docker build:
 
 ```text
-minio/minio:RELEASE.2025-02-03T21-03-04Z
+minio: RELEASE.2025-02-03T21-03-04Z
+mc:    RELEASE.2025-02-04T04-57-50Z
 ```
 
 Available commands:

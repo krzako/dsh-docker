@@ -6,6 +6,8 @@
  *
  * Merge contract:
  * - Enforced on EVERY start, with or without the completion flags:
+ *   - a new adapter section copies its optional display label from the seed;
+ *     an existing section's label is never overwritten,
  *   - a provider missing from an adapter's providers map is added whole from
  *     the seed,
  *   - a provider models list that is absent, empty, or null is set from the
@@ -411,6 +413,11 @@ function applyMerge(document, seedDocument, settingsRoot, seedRoot, globalFirstS
   }
 
   for (const [adapterName, seedSection] of adapterSections) {
+    if (settingsRoot[adapterName] === undefined && typeof seedSection.label === 'string') {
+      document.setIn([adapterName, 'label'], seedDocument.getIn([adapterName, 'label'], true).clone())
+      ops.push(`${adapterName}.label: added from seed`)
+      settingsRoot = document.toJS() ?? {}
+    }
     const providersPath = [adapterName, 'providers']
     const seedProvidersNode = seedDocument.getIn(providersPath, true)
 

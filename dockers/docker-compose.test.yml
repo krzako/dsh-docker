@@ -54,6 +54,7 @@ services:
         dsh_source: "${DSH_SOURCE:-../deepseek-harness}"
       args:
         DSH_COMMIT_HASH: "${DSH_COMMIT_HASH:-}"
+        CODEX_COMMIT_HASH: "${CODEX_COMMIT_HASH:-}"
 
     image: ${DSH_TEST_IMAGE:-deepseek-harness:test}
     container_name: dsh-test
@@ -62,6 +63,8 @@ services:
     environment:
       DSH_PUBLIC_WEB_URL: "http://localhost:4080"
       DSH_EXTRA_TRUSTED_HOSTS: "${DSH_EXTRA_TRUSTED_HOSTS:-}"
+      CODEX_HOME: "/home/node/.codex"
+      CODEX_LOG_REQUESTS: "${CODEX_LOG_REQUESTS:-false}"
       # Provider API keys, sourced from the host .env file (same names as
       # the production instance).
       LLM_PROXY_API_KEY: "${LLM_PROXY_API_KEY:-}"
@@ -92,6 +95,8 @@ services:
       - "../volumes/workspaces-test:/home/node"
       - "dsh-home-test:/home/node/.dsh"
       - "../volumes/comfy:/home/node/ComfyUI"
+      - "codex-home-test:/home/node/.codex"
+      - "../volumes/codex-requests-test:/opt/dsh-codex-requests"
       # Settings seed for the startup merge; mounted read-only so host edits
       # apply without rebuilding the image.
       - "./settings.seed.test.yaml:/opt/dsh-seed/settings.seed.yaml:ro"
@@ -214,5 +219,6 @@ networks:
 
 volumes:
   dsh-home-test:
+  codex-home-test:
   copilot-proxy-data-test:
   tailscale-state:

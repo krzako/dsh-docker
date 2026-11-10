@@ -14,6 +14,7 @@ services:
         dsh_source: "${DSH_SOURCE:-../deepseek-harness}"
       args:
         DSH_COMMIT_HASH: "${DSH_COMMIT_HASH:-}"
+        CODEX_COMMIT_HASH: "${CODEX_COMMIT_HASH:-}"
 
     image: ${DSH_IMAGE:-deepseek-harness:latest}
     container_name: dsh
@@ -21,6 +22,8 @@ services:
     environment:
       DSH_PUBLIC_WEB_URL: "http://localhost:3080"
       DSH_EXTRA_TRUSTED_HOSTS: "${DSH_EXTRA_TRUSTED_HOSTS:-}"
+      CODEX_HOME: "/home/node/.codex"
+      CODEX_LOG_REQUESTS: "${CODEX_LOG_REQUESTS:-false}"
       # Provider API keys, sourced from the host .env file. Each name matches
       # the provider's apiKeyEnv entry in settings.seed.yaml (provider name in
       # upper case + _API_KEY). An empty value means the key is not provided.
@@ -47,6 +50,8 @@ services:
       - "../volumes/workspaces:/home/node"
       - "dsh-home:/home/node/.dsh"
       - "../volumes/comfy:/home/node/ComfyUI"
+      - "codex-home:/home/node/.codex"
+      - "../volumes/codex-requests:/opt/dsh-codex-requests"
       # Settings seed for the startup merge; mounted read-only so host edits
       # apply without rebuilding the image.
       - "./settings.seed.yaml:/opt/dsh-seed/settings.seed.yaml:ro"
@@ -144,4 +149,5 @@ services:
 
 volumes:
   dsh-home:
+  codex-home:
   copilot-proxy-data:

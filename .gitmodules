@@ -1,3 +1,7 @@
 [submodule "deepseek-harness"]
 	path = deepseek-harness
 	url = git@github.com:krzako/deepseek-harness-no-telemetry.git
+[submodule "dockers/addons/codex"]
+	path = dockers/addons/codex
+	url = git@github.com:krzako/codex-no-telemetry.git
+	branch = main

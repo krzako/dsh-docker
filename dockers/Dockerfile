@@ -1,11 +1,65 @@
 # syntax=docker/dockerfile:1.7-labs
 
 # =============================================================================
-# External service images used only as artifact sources
+# External service artifacts
 # =============================================================================
 
 FROM traefik:v2.4 AS traefik_source
-FROM quay.io/minio/minio:RELEASE.2025-02-03T21-03-04Z AS minio_source
+
+# MinIO no longer publishes the pinned container image. Build the same server
+# release and a pinned companion mc release from their upstream Go modules.
+FROM golang:1.23-bookworm AS minio_builder
+
+ARG MINIO_VERSION=RELEASE.2025-02-03T21-03-04Z
+ARG MINIO_MC_VERSION=RELEASE.2025-02-04T04-57-50Z
+
+RUN CGO_ENABLED=0 GOBIN=/out go install "github.com/minio/minio@${MINIO_VERSION}" \
+    && CGO_ENABLED=0 GOBIN=/out go install "github.com/minio/mc@${MINIO_MC_VERSION}" \
+    && /out/minio --version \
+    && /out/mc --version
+
+
+# =============================================================================
+# OpenAI Codex fork builder
+# =============================================================================
+
+FROM rust:1.95.0-bookworm AS codex_builder
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        build-essential \
+        clang \
+        cmake \
+        git \
+        libcap-dev \
+        libclang-dev \
+        libssl-dev \
+        pkg-config \
+        protobuf-compiler \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /src
+ARG CODEX_COMMIT_HASH
+
+RUN test -n "${CODEX_COMMIT_HASH}" \
+    || (echo "ERROR: CODEX_COMMIT_HASH build ARG is empty." >&2; exit 1)
+
+COPY addons/codex/codex-rs /src/codex-rs
+
+RUN cargo build --locked --release \
+        --manifest-path /src/codex-rs/Cargo.toml \
+        -p codex-cli --bin codex \
+    && install -D -m 0755 /src/codex-rs/target/release/codex /out/bin/codex \
+    && printf '%s\n' "${CODEX_COMMIT_HASH}" > /out/REVISION
+
+# The workspace release profile retains debuginfo; the runtime image only needs
+# the executable and would otherwise gain more than a gigabyte.
+RUN strip /out/bin/codex
+
+# Small export-only target for local product tests and provenance inspection.
+FROM scratch AS codex_artifact
+COPY --from=codex_builder /out/ /
 
 
 # =============================================================================
@@ -102,6 +156,8 @@ RUN echo "Building DSH commit: ${DSH_COMMIT_HASH}"; \
 # =============================================================================
 
 FROM node:24-bookworm AS runtime
+
+ARG CODEX_COMMIT_HASH
 
 
 # -----------------------------------------------------------------------------
@@ -247,11 +303,11 @@ COPY --from=traefik_source /usr/local/bin/traefik /usr/local/bin/traefik
 
 # -----------------------------------------------------------------------------
 # MinIO + MinIO Client
-# Exact binaries from minio/minio:RELEASE.2025-02-03T21-03-04Z.
+# Pinned source releases built in the minio_builder stage.
 # -----------------------------------------------------------------------------
 
-COPY --from=minio_source /usr/bin/minio /usr/local/bin/minio
-COPY --from=minio_source /usr/bin/mc /usr/local/bin/mc
+COPY --from=minio_builder /out/minio /usr/local/bin/minio
+COPY --from=minio_builder /out/mc /usr/local/bin/mc
 
 
 # -----------------------------------------------------------------------------
@@ -319,14 +375,21 @@ EXPOSE 3080
 
 ENV DSH_TELEMETRY_DISABLED=1 \
     DSH_TELEMETRY_MODE=DISABLED \
-    DSH_SOURCE_DIR=/opt/deepseek-harness
+    DSH_SOURCE_DIR=/opt/deepseek-harness \
+    DSH_CODEX_BIN=/opt/codex/bin/codex \
+    DSH_CODEX_REVISION=${CODEX_COMMIT_HASH} \
+    CODEX_HOME=/home/node/.codex
+
+COPY --from=codex_builder /out/ /opt/codex/
 
 COPY --from=builder --chown=node:node \
     /opt/deepseek-harness \
     /opt/deepseek-harness
 
-RUN mkdir -p /home/node/.dsh \
-    && chown -R node:node /home/node/.dsh
+RUN mkdir -p /home/node/.dsh /home/node/.codex \
+    && chown -R node:node /home/node/.dsh /home/node/.codex \
+    && test -x /opt/codex/bin/codex \
+    && test "$(cat /opt/codex/REVISION)" = "${DSH_CODEX_REVISION}"
 
 # Agent-readable documentation of the bundled development environment.
 COPY --chown=node:node environment.md /home/node/environment.md
@@ -339,7 +402,7 @@ RUN chmod 0555 /usr/local/bin/dsh-entrypoint
 COPY --chown=node:node settings.seed.yaml /opt/dsh-seed/settings.seed.yaml
 COPY --chown=node:node addons/seed-settings/seed-settings.mjs /opt/dsh-seed/seed-settings.mjs
 COPY --chown=node:node addons/seed-settings/seed-settings.test.mjs /opt/dsh-seed/seed-settings.test.mjs
-RUN cd /opt/dsh-seed && node --test seed-settings.test.mjs
+RUN cd /opt/dsh-seed && SETTINGS_SEED_FILE=/opt/dsh-seed/settings.seed.yaml node --test seed-settings.test.mjs
 
 RUN node --check /opt/dsh-seed/seed-settings.mjs \
     && test -f /opt/dsh-seed/settings.seed.yaml

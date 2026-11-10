@@ -21,11 +21,23 @@ import {
 const execFileAsync = promisify(execFile)
 const yaml = loadYaml()
 const SCRIPT_PATH = fileURLToPath(new URL('./seed-settings.mjs', import.meta.url))
-const SEED_PATH = fileURLToPath(new URL('./settings.seed.yaml', import.meta.url))
+const SEED_PATH = process.env.SETTINGS_SEED_FILE ?? fileURLToPath(new URL('../../settings.seed.yaml', import.meta.url))
 
 /** The repository seed text, shared by every fixture. */
 const SEED_TEXT = await fsp.readFile(SEED_PATH, 'utf8')
 const SEED = yaml.parse(SEED_TEXT)
+
+it('keeps Codex provider and model definitions aligned with llm-pi-ai', () => {
+  const piProviders = SEED['llm-pi-ai'].providers
+  const codexProviders = SEED.codex.providers
+  assert.deepEqual(Object.keys(codexProviders).sort(), Object.keys(piProviders).sort())
+  for (const [name, profile] of Object.entries(piProviders)) {
+    const { api: _api, ...shared } = profile
+    const { apiFormat, ...codex } = codexProviders[name]
+    assert.equal(apiFormat, undefined)
+    assert.deepEqual(codex, shared, `${name} must mirror the same model and provider settings`)
+  }
+})
 
 /**
  * The seed text with one extra openrouter model, for merge tests that need a
@@ -201,7 +213,7 @@ describe('first seed over an existing document', () => {
     assert.equal(llm_proxy.defaultContextWindow, 131072)
     assert.equal(llm_proxy.streamIdleTimeoutMs, 600000)
     // Global sections are replaced with seed values.
-    assert.deepEqual(settings['agent-default-model'], { provider: 'llm_proxy', model: 'qwen3.8-27b' })
+    assert.deepEqual(settings['agent-default-model'], { agent: 'standard', provider: 'llm_proxy', model: 'qwen3.8-27b' })
     assert.deepEqual(settings['permission'], SEED.permission)
     assert.deepEqual(settings['ui-theme'], SEED['ui-theme'])
     assert.deepEqual(settings['agent-presets'], SEED['agent-presets'])
@@ -214,7 +226,7 @@ describe('first seed over an existing document', () => {
     assert.deepEqual(llm_proxy.compat, SEED['llm-pi-ai'].providers.llm_proxy.compat)
     // Missing models appended; user models kept.
     const ids = llm_proxy.models.map((m) => m.id)
-    assert.deepEqual(ids, ['qwen3.6-35b-a3b', 'qwen3.8-27b'])
+    assert.deepEqual(ids, ['qwen3.6-35b-a3b', 'qwen3.8-27b', 'bonsai-2-27b'])
     // copilot_proxy provider added whole.
     const copilot_proxy = settings['llm-pi-ai'].providers.copilot_proxy
     assert.equal(copilot_proxy.baseURL, 'http://copilot-proxy:9091/v1')
@@ -355,6 +367,8 @@ describe('runs after the flag exists', () => {
     // deleted settings document restores the route without needing the secret
     // to return to the process environment.
     expected['llm-pi-ai'].providers.copilot_proxy = seededCopilot()
+    expected.codex.providers.copilot_proxy = structuredClone(SEED.codex.providers.copilot_proxy)
+    delete expected.codex.providers.copilot_proxy.apiKeyEnvRequired
     assert.deepEqual(yaml.parse(await readSettings()), expected)
   })
 })
@@ -724,13 +738,19 @@ describe('CLI list and reset modes', () => {
 
   it('lists adapters and providers, one per line', async () => {
     const adapters = await execFileAsync(process.execPath, [SCRIPT_PATH, '--list-adapters'], { env: cliEnv() })
-    assert.equal(adapters.stdout.trim(), 'llm-pi-ai')
+    assert.deepEqual(adapters.stdout.trim().split('\n').sort(), ['codex', 'llm-pi-ai'])
     const providers = await execFileAsync(
       process.execPath,
       [SCRIPT_PATH, '--list-providers', '--adapter', 'llm-pi-ai'],
       { env: cliEnv() },
     )
     assert.deepEqual(providers.stdout.trim().split('\n').sort(), ['copilot_proxy', 'llm_proxy', 'openrouter'])
+    const codexProviders = await execFileAsync(
+      process.execPath,
+      [SCRIPT_PATH, '--list-providers', '--adapter', 'codex'],
+      { env: cliEnv() },
+    )
+    assert.deepEqual(codexProviders.stdout.trim().split('\n').sort(), ['copilot_proxy', 'llm_proxy', 'openrouter'])
   })
 
   it('exits non-zero for an unknown adapter or provider', async () => {
