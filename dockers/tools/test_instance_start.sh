@@ -1,27 +1,38 @@
+
 #!/usr/bin/env bash
 #
 # Start the DSH test instance (docker-compose.test.yml, project dsh-test).
 #
-# At startup the script first asks whether to rebuild the images before
-# starting; typing exactly `yes` will rebuild before `docker compose up`.
+# Without --dont-ask, asks whether to rebuild images and remove old test volumes.
+# Only an exact `yes` triggers either operation.
+# With --dont-ask, both answers default to no.
+# With -d / --detach, starts containers in the background.
 #
-# Then it asks whether to remove the old test volumes:
-#   every directory in ../volumes whose name ends in `-test` (the test
-#   instance's bind mounts -- discovered dynamically, nothing hardcoded)
-#   plus the named volumes of the dsh-test compose project.
-#
-# Typing exactly `yes` stops the test stack with `docker compose down -v`
-# (removing the test containers together with the named volumes) and deletes
-# every `-test` directory found in the volumes dir.
-# Any other answer keeps the volumes untouched. Every answer is echoed
-# back, and the stack is then started in the foreground.
-#
-# Before anything happens the script verifies that the test instance's host
-# ports (4080 web, 4310-4330 agents, 10418 git -- production plus 1000) are
-# not already published by another container, so the production instance and
-# the test instance can run at the same time.
+# Test volume cleanup covers dynamically discovered ../volumes/*-test
+# directories and named volumes of the dsh-test Compose project.
+# Before starting, checks that test-instance ports aren't used by other
+# containers (4080 web, 4310-4330 agents, 10418 git).
 
 set -euo pipefail
+
+DONT_ASK=false
+DETACH=false
+
+for arg in "$@"; do
+  case "$arg" in
+    --dont-ask)
+      DONT_ASK=true
+      ;;
+    -d|--detach)
+      DETACH=true
+      ;;
+    *)
+      echo "Unknown argument: $arg" >&2
+      echo "Usage: $0 [--dont-ask] [-d|--detach]" >&2
+      exit 2
+      ;;
+  esac
+done
 
 # Repo root: the compose files the scripts drive live there.
 cd "$(dirname "$0")/.."
@@ -31,6 +42,7 @@ COMPOSE_FILE="${DSH_TEST_COMPOSE_FILE:-docker-compose.test.yml}"
 # The only path to the host volumes directory: every bind-mount directory of
 # the test instance lives in there as "<name>-test".
 VOLUMES_DIR="../volumes"
+
 # Host ports of the test instance: production ports plus 1000 (keep in sync
 # with docker-compose.test.yml).
 TEST_WEB_PORT="4080"
@@ -136,11 +148,16 @@ check_test_ports_free() {
 
 check_test_ports_free
 
-# Rebuild the images before starting?
-rebuild="$(ask "Rebuild the images before starting? Type 'yes' to rebuild: ")"
-
-# Remove the old test volumes?
-answer="$(ask "Remove the old test volumes first? Type 'yes' to remove: ")"
+if [[ "$DONT_ASK" == true ]]; then
+  rebuild="no"
+  answer="no"
+  echo "Skipping questions (--dont-ask)."
+  echo "Rebuild: no"
+  echo "Remove volumes: no"
+else
+  rebuild="$(ask "Rebuild the images before starting? Type 'yes' to rebuild: ")"
+  answer="$(ask "Remove the old test volumes first? Type 'yes' to remove: ")"
+fi
 
 if [[ "$answer" == "yes" ]]; then
   echo "Removing old test volumes..."
@@ -165,6 +182,12 @@ else
   echo "Skipping the rebuild (existing images will be used)."
 fi
 
-echo "Starting the test instance in the foreground (Ctrl+C to stop)..."
 prepare_bind_volume_dirs
-compose up
+
+if [[ "$DETACH" == true ]]; then
+  echo "Starting the test instance in detached mode..."
+  compose up -d
+else
+  echo "Starting the test instance in the foreground (Ctrl+C to stop)..."
+  compose up
+fi
