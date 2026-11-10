@@ -31,7 +31,7 @@ services:
       # deepseek-harness port
       - "127.0.0.1:3080:3080"
       # Ports for agents applications
-      - "127.0.0.1:3310-3330:3310-3330"
+      - "127.0.0.1:3300-3399:3300-3399"
 
     volumes:
       - "../volumes/workspaces:/home/node"

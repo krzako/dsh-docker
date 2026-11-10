@@ -45,8 +45,8 @@ services:
     ports:
       # deepseek-harness web port (production 3080 + 1000)
       - "127.0.0.1:4080:3080"
-      # Ports for agents applications (production 3310-3330 + 1000)
-      - "127.0.0.1:4310-4330:3310-3330"
+      # Ports for agents applications (production 3300-3399 + 1000)
+      - "127.0.0.1:4300-4399:3300-3399"
 
     volumes:
       - "../volumes/workspaces-test:/home/node"
