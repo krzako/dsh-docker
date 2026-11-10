@@ -4,3 +4,4 @@ volumes
 node_modules
 dist
 *.log
+tailscale-serve.json

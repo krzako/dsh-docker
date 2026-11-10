@@ -22,6 +22,30 @@
 name: dsh-test
 
 services:
+  tailscale:
+    image: tailscale/tailscale:stable
+    hostname: deepseek-harness
+    restart: unless-stopped
+
+    environment:
+      TS_AUTHKEY: ${TS_AUTHKEY:?Set TS_AUTHKEY in .env}
+      TS_HOSTNAME: deepseek-harness
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_AUTH_ONCE: "true"
+      TS_USERSPACE: "true"
+      TS_ACCEPT_DNS: "false"
+
+      # Expose only TCP port 8001 to the tailnet.
+      # No TUN, NET_ADMIN, NET_RAW or IP forwarding required.
+      TS_SERVE_CONFIG: /etc/tailscale/serve.json
+
+    volumes:
+      - tailscale-state:/var/lib/tailscale
+      - ./tailscale-serve.json:/etc/tailscale/serve.json:ro
+
+    networks:
+      - dsh_test_net
+
   deepseek-harness:
     init: true
     build:
@@ -33,6 +57,7 @@ services:
 
     image: ${DSH_TEST_IMAGE:-deepseek-harness:test}
     container_name: dsh-test
+    entrypoint: ["/usr/local/bin/dsh-entrypoint2"]
 
     environment:
       DSH_PUBLIC_WEB_URL: "http://localhost:4080"
@@ -60,6 +85,9 @@ services:
       # Ports for agents applications (production 3300-3399 + 1000)
       - "127.0.0.1:4300-4399:3300-3399"
 
+    networks:
+      - dsh_test_net
+
     volumes:
       - "../volumes/workspaces-test:/home/node"
       - "dsh-home-test:/home/node/.dsh"
@@ -67,6 +95,7 @@ services:
       # Settings seed for the startup merge; mounted read-only so host edits
       # apply without rebuilding the image.
       - "./settings.seed.test.yaml:/opt/dsh-seed/settings.seed.yaml:ro"
+      - "./entrypoint.sh:/usr/local/bin/dsh-entrypoint2:ro"
 
     stdin_open: true
     tty: true
@@ -179,6 +208,11 @@ services:
     volumes:
       - ../volumes/open-terminal-test:/home/user
 
+networks:
+  dsh_test_net:
+    driver: bridge
+
 volumes:
   dsh-home-test:
   copilot-proxy-data-test:
+  tailscale-state:
