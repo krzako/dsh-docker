@@ -23,6 +23,7 @@ name: dsh-test
 
 services:
   deepseek-harness:
+    init: true
     build:
       context: .
       additional_contexts:
