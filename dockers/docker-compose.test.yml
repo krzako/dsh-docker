@@ -41,6 +41,17 @@ services:
       LLM_PROXY_API_KEY: "${LLM_PROXY_API_KEY:-}"
       COPILOT_PROXY_API_KEY: "${COPILOT_PROXY_API_KEY:-}"
       OPENROUTER_API_KEY: "${OPENROUTER_API_KEY:-}"
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+    
+    gpus: all    
+    shm_size: 8gb
+    mem_limit: 112g
+    memswap_limit: 112g
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
 
     ports:
       # deepseek-harness web port (production 3080 + 1000)
@@ -51,6 +62,7 @@ services:
     volumes:
       - "../volumes/workspaces-test:/home/node"
       - "dsh-home-test:/home/node/.dsh"
+      - "../volumes/comfy:/home/node/ComfyUI"
       # Settings seed for the startup merge; mounted read-only so host edits
       # apply without rebuilding the image.
       - "./settings.seed.test.yaml:/opt/dsh-seed/settings.seed.yaml:ro"
