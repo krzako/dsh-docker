@@ -35,6 +35,7 @@ services:
 
     environment:
       DSH_PUBLIC_WEB_URL: "http://localhost:4080"
+      DSH_EXTRA_TRUSTED_HOSTS: "${DSH_EXTRA_TRUSTED_HOSTS:-}"
       # Provider API keys, sourced from the host .env file (same names as
       # the production instance).
       LLM_PROXY_API_KEY: "${LLM_PROXY_API_KEY:-}"

@@ -77,7 +77,20 @@ server.listen(PUBLIC_PORT, PUBLIC_HOST, () => {
 });
 NODE
 
-exec node "$DSH_SOURCE_DIR/apps/cli/lib/bin.js" web \
+set -- web \
   --port 3081 \
   --trusted-host localhost:3080 \
   --trusted-host 127.0.0.1:3080
+
+# Split only on commas and keep host values literal (including IPv6 brackets).
+original_ifs=$IFS
+IFS=,
+set -f
+for host in ${DSH_EXTRA_TRUSTED_HOSTS:-}; do
+    [ -n "$host" ] || continue
+    set -- "$@" --trusted-host "$host"
+done
+set +f
+IFS=$original_ifs
+
+exec node "$DSH_SOURCE_DIR/apps/cli/lib/bin.js" "$@"

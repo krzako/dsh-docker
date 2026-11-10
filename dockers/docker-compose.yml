@@ -19,6 +19,7 @@ services:
     
     environment:
       DSH_PUBLIC_WEB_URL: "http://localhost:3080"
+      DSH_EXTRA_TRUSTED_HOSTS: "${DSH_EXTRA_TRUSTED_HOSTS:-}"
       # Provider API keys, sourced from the host .env file. Each name matches
       # the provider's apiKeyEnv entry in settings.seed.yaml (provider name in
       # upper case + _API_KEY). An empty value means the key is not provided.
